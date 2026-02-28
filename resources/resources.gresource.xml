@@ -2,5 +2,6 @@
 <gresources>
     <gresource prefix="/live/arcturus/puppet-inspector">
         <file compressed="true" preprocess="xml-stripblanks">window.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">metadata_inspector.ui</file>
     </gresource>
 </gresources>

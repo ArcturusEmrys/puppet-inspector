@@ -6,6 +6,7 @@ use gtk4::prelude::*;
 mod document;
 mod io_adapter;
 mod navigation_item;
+mod puppet;
 mod string_ext;
 mod window;
 

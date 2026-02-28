@@ -1,13 +1,16 @@
 use glib;
-use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
 
 use inox2d;
 use std::borrow::Cow;
 use std::cell::RefCell;
+use std::fmt::{Debug, Error as FmtError, Formatter};
+use std::sync::Arc;
 
 use crate::document::Document;
+use crate::puppet::MetadataInspector;
 
+#[derive(Debug)]
 pub enum Section {
     PuppetMeta,
     PuppetPhysics,
@@ -17,6 +20,7 @@ pub enum Section {
     VendorData,
 }
 
+#[derive(Debug)]
 pub enum PathComponent {
     Section(Section),
     PuppetNode(inox2d::node::InoxNodeUuid),
@@ -108,6 +112,16 @@ impl NavigationItem {
                 Some(list.into())
             }
             _ => None,
+        }
+    }
+
+    pub fn child_inspector(&self, document: Arc<Document>) -> gtk4::Widget {
+        match self.imp().path.borrow().as_ref().expect("a path") {
+            PathComponent::Section(Section::PuppetMeta) => MetadataInspector::new(document).into(),
+            path => gtk4::Label::builder()
+                .label(format!("Not yet implemented: {:?}", path))
+                .build()
+                .into(),
         }
     }
 }

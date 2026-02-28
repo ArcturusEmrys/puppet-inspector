@@ -26,8 +26,12 @@
                     </object>
                 </property>
                 <property name="end_child">
-                    <object class="GtkLabel">
-                        <property name="label">Please open a document</property>
+                    <object class="GtkBox" id="detail_view">
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="label">Please open a document</property>
+                            </object>
+                        </child>
                     </object>
                 </property>
             </object>

@@ -12,6 +12,8 @@ use std::cell::RefCell;
 use std::error::Error;
 use std::io::Read;
 
+use std::sync::Arc;
+
 use crate::document::Document;
 use crate::navigation_item::{NavigationItem, PathComponent, Section};
 use crate::string_ext::StrExt;
@@ -20,7 +22,7 @@ use crate::string_ext::StrExt;
 /// Hence the mutability hack.
 #[derive(Default)]
 pub struct WindowControllerState {
-    open_doc: Option<Document>,
+    open_doc: Option<Arc<Document>>,
     navigation_tree: Option<gtk4::TreeListModel>,
     root_list: Option<gio::ListStore>,
 }
@@ -38,6 +40,8 @@ pub struct WindowControllerImp {
     main_menu: TemplateChild<gio::MenuModel>,
     #[template_child]
     main_menu_button: TemplateChild<gtk4::MenuButton>,
+    #[template_child]
+    detail_view: TemplateChild<gtk4::Box>,
     state: RefCell<WindowControllerState>,
 }
 
@@ -117,7 +121,7 @@ impl WindowController {
         let stream = file.read(Some(&gio::Cancellable::new()))?;
         let stream_adapter = crate::io_adapter::FileIn::from(stream);
 
-        self.imp().state.borrow_mut().open_doc = Some(Document::open(stream_adapter)?);
+        self.imp().state.borrow_mut().open_doc = Some(Arc::new(Document::open(stream_adapter)?));
 
         self.populate_navigation();
 
@@ -126,6 +130,7 @@ impl WindowController {
 
     pub fn populate_navigation(&self) {
         let mut state = self.imp().state.borrow_mut();
+        let document = state.open_doc.clone().unwrap();
         if state.root_list.is_none() {
             state.root_list = Some(gio::ListStore::builder().build());
         }
@@ -225,5 +230,31 @@ impl WindowController {
             NavigationItem::new(PathComponent::Section(Section::ModelTextures)),
             NavigationItem::new(PathComponent::Section(Section::VendorData)),
         ]);
+
+        let navigation_selection = self.imp().navigation_selection.clone();
+        let detail_view = self.imp().detail_view.clone();
+        navigation_selection.connect_selection_changed(move |model, position, count| {
+            for position in position..position + count {
+                if !model.is_selected(position) {
+                    continue;
+                }
+
+                let tree_row = model.item(position);
+                if let Some(tree_row) = tree_row {
+                    let item = tree_row
+                        .downcast::<gtk4::TreeListRow>()
+                        .expect("tree row")
+                        .item();
+                    if let Some(item) = item {
+                        let item = item.downcast::<NavigationItem>().expect("nav item");
+                        while detail_view.first_child().is_some() {
+                            detail_view.remove(&detail_view.first_child().unwrap());
+                        }
+
+                        detail_view.append(&item.child_inspector(document.clone()));
+                    }
+                }
+            }
+        });
     }
 }
