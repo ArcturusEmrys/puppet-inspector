@@ -8,7 +8,7 @@ I am very sorry you have to do this.
 
 1. Install Rust. This is the easy part.
 2. Install GTK.
-  * If you're on Ubuntu you probably already have this and just need the dev packages.
+  * If you're on Ubuntu, install libgtk-4-dev
   * On Windows, there are two paths to install GTK.
     * GTK itself recommends MSYS2, but GTK-RS recommends gvsbuild.
     * I actually chose neither! gvsbuild distributes nightlies as a ZIP that can be installed into `C:\gtk`. I set the following path vars:
