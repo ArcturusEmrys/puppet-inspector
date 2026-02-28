@@ -36,24 +36,8 @@
         <property name="titlebar">
             <object class="GtkHeaderBar">
                 <child type="start">
-                    <object class="GtkMenuButton">
+                    <object class="GtkMenuButton" id="main_menu_button">
                         <property name="icon-name">open-menu-symbolic</property>
-                        <property name="menu-model">
-                            <menu>
-                                <section>
-                                    <item>
-                                        <attribute name="label" translatable="yes">Open...</attribute>
-                                        <attribute name="action">win.open</attribute>
-                                    </item>
-                                </section>
-                                <section>
-                                    <item>
-                                        <attribute name="label" translatable="yes">Exit</attribute>
-                                        <attribute name="action">window.close</attribute>
-                                    </item>
-                                </section>
-                            </menu>
-                        </property>
                     </object>
                 </child>
             </object>
@@ -75,4 +59,18 @@
             </property>
         </object>
     </template>
+    <menu id="main_menu">
+        <section>
+            <item>
+                <attribute name="label" translatable="yes">Open...</attribute>
+                <attribute name="action">win.open</attribute>
+            </item>
+        </section>
+        <section>
+            <item>
+                <attribute name="label" translatable="yes">Exit</attribute>
+                <attribute name="action">window.close</attribute>
+            </item>
+        </section>
+    </menu>
 </interface>

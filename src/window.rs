@@ -34,6 +34,10 @@ pub struct WindowControllerImp {
     navigation_factory: TemplateChild<gtk4::SignalListItemFactory>,
     #[template_child]
     navigation_selection: TemplateChild<gtk4::SingleSelection>,
+    #[template_child]
+    main_menu: TemplateChild<gio::MenuModel>,
+    #[template_child]
+    main_menu_button: TemplateChild<gtk4::MenuButton>,
     state: RefCell<WindowControllerState>,
 }
 
@@ -75,9 +79,13 @@ impl WindowController {
     pub fn new(app: &gtk4::Application) -> Self {
         let selfish: WindowController =
             glib::Object::builder().property("application", app).build();
+
+        let main_menu = selfish.imp().main_menu.clone();
+        let main_menu_button = selfish.imp().main_menu_button.clone();
+        main_menu_button.set_menu_model(Some(&main_menu));
+
         let picker = selfish.imp().filepicker.clone();
         let callback_self = selfish.clone();
-
         selfish.add_action_entries([gio::ActionEntry::builder("open")
             .activate(move |window: &WindowController, _, _| {
                 let callback_self = callback_self.clone();
