@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<interface>
+    <template class="WindowController" parent="GtkApplicationWindow">
+        <child>
+            <object class="GtkPaned">
+                <property name="start_child">
+                    <object class="GtkScrolledWindow">
+                        <child>
+                            <object class="GtkListView">
+                                <property name="factory">
+                                    <object class="GtkSignalListItemFactory" id="navigation_factory">
+                                    </object>
+                                </property>
+                                <property name="model">
+                                    <object class="GtkSingleSelection" id="navigation_selection">
+                                        <!-- We can NOT build the tree model inside here for reasons -->
+                                        <property name="model">
+                                            <object class="GtkTreeListModel">
+                                                <property name="passthrough">false</property>
+                                            </object>
+                                        </property>
+                                    </object>
+                                </property>
+                            </object>
+                        </child>
+                    </object>
+                </property>
+                <property name="end_child">
+                    <object class="GtkLabel">
+                        <property name="label">Please open a document</property>
+                    </object>
+                </property>
+            </object>
+        </child>
+        <property name="titlebar">
+            <object class="GtkHeaderBar">
+                <child type="start">
+                    <object class="GtkMenuButton">
+                        <property name="icon-name">open-menu-symbolic</property>
+                        <property name="menu-model">
+                            <menu>
+                                <section>
+                                    <item>
+                                        <attribute name="label" translatable="yes">Open...</attribute>
+                                        <attribute name="action">win.open</attribute>
+                                    </item>
+                                </section>
+                                <section>
+                                    <item>
+                                        <attribute name="label" translatable="yes">Exit</attribute>
+                                        <attribute name="action">window.close</attribute>
+                                    </item>
+                                </section>
+                            </menu>
+                        </property>
+                    </object>
+                </child>
+            </object>
+        </property>
+        <object class="GtkFileDialog" id="filepicker">
+            <property name="title" translatable="yes">Select puppet...</property>
+            <property name="filters">
+                <object class="GListStore">
+                    <child>
+                        <object class="GtkFileFilter">
+                            <property name="name" translatable="yes">Inochi2D Puppet (*.inp)</property>
+                            <!-- TODO: Does Inochi have a mimetype? -->
+                            <patterns>
+                                <pattern>*.inp</pattern>
+                            </patterns>
+                        </object>
+                    </child>
+                </object>
+            </property>
+        </object>
+    </template>
+</interface>

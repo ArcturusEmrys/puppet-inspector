@@ -1,0 +1,189 @@
+use gtk4;
+use glib;
+use gio;
+
+use gtk4::prelude::*;
+use gtk4::subclass::prelude::*;
+use gtk4::CompositeTemplate;
+use glib::subclass::InitializingObject;
+use gio::prelude::*;
+
+use std::io::Read;
+use std::error::Error;
+use std::cell::RefCell;
+
+use crate::document::Document;
+use crate::navigation_item::{NavigationItem, PathComponent, Section};
+
+/// For some reason, glib-rs does not support mutating private/impl structs.
+/// Hence the mutability hack.
+#[derive(Default)]
+pub struct WindowControllerState {
+    open_doc: Option<Document>,
+    navigation_tree: Option<gtk4::TreeListModel>,
+    root_list: Option<gio::ListStore>,
+}
+
+#[derive(CompositeTemplate, Default)]
+#[template(resource = "/live/arcturus/puppet-inspector/window.ui")]
+pub struct WindowControllerImp {
+    #[template_child]
+    filepicker: TemplateChild<gtk4::FileDialog>,
+    #[template_child]
+    navigation_factory: TemplateChild<gtk4::SignalListItemFactory>,
+    #[template_child]
+    navigation_selection: TemplateChild<gtk4::SingleSelection>,
+    state: RefCell<WindowControllerState>
+}
+
+#[glib::object_subclass]
+impl ObjectSubclass for WindowControllerImp {
+    const NAME: &'static str = "WindowController";
+    type Type = WindowController;
+    type ParentType = gtk4::ApplicationWindow;
+
+    fn class_init(class: &mut Self::Class) {
+        class.bind_template();
+    }
+
+    fn instance_init(obj: &InitializingObject<Self>) {
+        obj.init_template();
+    }
+}
+
+impl ObjectImpl for WindowControllerImp {
+    fn constructed(&self) {
+        self.parent_constructed();
+    }
+}
+
+impl WidgetImpl for WindowControllerImp {
+
+}
+
+impl WindowImpl for WindowControllerImp {
+
+}
+
+impl ApplicationWindowImpl for WindowControllerImp {
+
+}
+
+glib::wrapper! {
+    pub struct WindowController(ObjectSubclass<WindowControllerImp>)
+        @extends gtk4::ApplicationWindow, gtk4::Window, gtk4::Widget,
+        @implements gio::ActionGroup, gio::ActionMap, gtk4::Accessible, gtk4::Buildable,
+                    gtk4::ConstraintTarget, gtk4::Native, gtk4::Root, gtk4::ShortcutManager;
+}
+
+impl WindowController {
+    pub fn new(app: &gtk4::Application) -> Self {
+        let selfish: WindowController = glib::Object::builder().property("application", app).build();
+        let picker = selfish.imp().filepicker.clone();
+        let callback_self = selfish.clone();
+
+        selfish.add_action_entries([
+            gio::ActionEntry::builder("open").activate(move |window: &WindowController, _, _| {
+                let callback_self = callback_self.clone();
+
+                picker.open(Some(window), Some(&gio::Cancellable::new()), move |file_or_error| {
+                    let maybe_error: Result<(), Box<dyn Error>> = (|| {
+                        callback_self.open_document(file_or_error?)?;
+                        Ok(())
+                    })();
+
+                    if let Err(e) = maybe_error {
+                        eprintln!("{:?}", e);
+                    }
+                });
+            }).build()
+        ]);
+
+        let factory = selfish.imp().navigation_factory.clone();
+
+        factory.connect_setup(|_factory, list_item| {
+            let label = gtk4::Label::new(None);
+            let tree_expander = gtk4::TreeExpander::builder().build();
+
+            tree_expander.set_child(Some(&label));
+
+            let list_item = list_item.downcast_ref::<gtk4::ListItem>().expect("list item");
+            
+            list_item.set_child(Some(&tree_expander));
+            list_item.set_property("focusable", false);
+        });
+
+        factory.connect_bind(|_factory, list_item| {
+            let list_item = list_item.downcast_ref::<gtk4::ListItem>().expect("list item");
+
+            let mut maybe_nav = list_item.item().expect("list items to have a child");
+            while maybe_nav.clone().downcast::<NavigationItem>().is_err() {
+                let list_item = maybe_nav.downcast::<gtk4::TreeListRow>().expect("valid child list item");
+                if let Some(child) = list_item.item() {
+                    maybe_nav = child;
+                } else {
+                    panic!("No navigation child!");
+                }
+            }
+            
+            //TODO: TreeItemStore gives you TreeListRows instead of your actual item type.
+            //We need to keep unwrapping it until we get a NavigationItem or run out of items.
+
+            let nav = maybe_nav.downcast::<NavigationItem>().expect("our own child");
+            let tree_item = list_item.child().and_downcast::<gtk4::TreeExpander>().expect("our own tree expander");
+            let label = tree_item.child().and_downcast::<gtk4::Label>().expect("our own label");
+
+            label.set_label(match nav.imp().path.borrow().as_ref().expect("a path") {
+                PathComponent::Section(Section::ModelTextures) => "Textures",
+                PathComponent::Section(Section::PuppetMeta) => "Metadata",
+                PathComponent::Section(Section::PuppetNode) => "Nodes",
+                PathComponent::Section(Section::PuppetParams) => "Params",
+                PathComponent::Section(Section::PuppetPhysics) => "Physics",
+                PathComponent::Section(Section::VendorData) => "VendorData",
+            });
+        });
+
+        selfish.populate_navigation();
+
+        selfish
+    }
+
+    pub fn open_document(&self, file: gio::File) -> Result<(), Box<dyn Error>> {
+        // TODO: Create some actual UI surface from all of this.
+        // TODO: async loading
+
+        let stream = file.read(Some(&gio::Cancellable::new()))?;
+        let stream_adapter = crate::io_adapter::FileIn::from(stream);
+
+        self.imp().state.borrow_mut().open_doc = Some(Document::open(stream_adapter)?);
+
+        Ok(())
+    }
+
+    pub fn populate_navigation(&self) {
+        let mut state = self.imp().state.borrow_mut();
+        if state.root_list.is_none() {
+            state.root_list = Some(gio::ListStore::builder().build());
+        }
+
+        let root_list = state.root_list.clone().unwrap();
+
+        if state.navigation_tree.is_none() {
+            state.navigation_tree = Some(gtk4::TreeListModel::new(root_list.clone(), false, false, |node| {
+                //TODO: This creates child lists
+                None
+            }));
+
+            self.imp().navigation_selection.set_model(state.navigation_tree.as_ref());
+        }
+
+        root_list.extend_from_slice(&[
+            NavigationItem::new(PathComponent::Section(Section::PuppetMeta)),
+            NavigationItem::new(PathComponent::Section(Section::PuppetPhysics)),
+            NavigationItem::new(PathComponent::Section(Section::PuppetNode)),
+            NavigationItem::new(PathComponent::Section(Section::PuppetParams)),
+            NavigationItem::new(PathComponent::Section(Section::ModelTextures)),
+            NavigationItem::new(PathComponent::Section(Section::VendorData)),
+        ]);
+    }
+}
