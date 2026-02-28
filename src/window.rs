@@ -1,19 +1,20 @@
-use gtk4;
-use glib;
 use gio;
+use glib;
+use gtk4;
 
+use gio::prelude::*;
+use glib::subclass::InitializingObject;
+use gtk4::CompositeTemplate;
 use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
-use gtk4::CompositeTemplate;
-use glib::subclass::InitializingObject;
-use gio::prelude::*;
 
-use std::io::Read;
-use std::error::Error;
 use std::cell::RefCell;
+use std::error::Error;
+use std::io::Read;
 
 use crate::document::Document;
 use crate::navigation_item::{NavigationItem, PathComponent, Section};
+use crate::string_ext::StrExt;
 
 /// For some reason, glib-rs does not support mutating private/impl structs.
 /// Hence the mutability hack.
@@ -33,12 +34,12 @@ pub struct WindowControllerImp {
     navigation_factory: TemplateChild<gtk4::SignalListItemFactory>,
     #[template_child]
     navigation_selection: TemplateChild<gtk4::SingleSelection>,
-    state: RefCell<WindowControllerState>
+    state: RefCell<WindowControllerState>,
 }
 
 #[glib::object_subclass]
 impl ObjectSubclass for WindowControllerImp {
-    const NAME: &'static str = "WindowController";
+    const NAME: &'static str = "PIWindowController";
     type Type = WindowController;
     type ParentType = gtk4::ApplicationWindow;
 
@@ -57,17 +58,11 @@ impl ObjectImpl for WindowControllerImp {
     }
 }
 
-impl WidgetImpl for WindowControllerImp {
+impl WidgetImpl for WindowControllerImp {}
 
-}
+impl WindowImpl for WindowControllerImp {}
 
-impl WindowImpl for WindowControllerImp {
-
-}
-
-impl ApplicationWindowImpl for WindowControllerImp {
-
-}
+impl ApplicationWindowImpl for WindowControllerImp {}
 
 glib::wrapper! {
     pub struct WindowController(ObjectSubclass<WindowControllerImp>)
@@ -78,72 +73,31 @@ glib::wrapper! {
 
 impl WindowController {
     pub fn new(app: &gtk4::Application) -> Self {
-        let selfish: WindowController = glib::Object::builder().property("application", app).build();
+        let selfish: WindowController =
+            glib::Object::builder().property("application", app).build();
         let picker = selfish.imp().filepicker.clone();
         let callback_self = selfish.clone();
 
-        selfish.add_action_entries([
-            gio::ActionEntry::builder("open").activate(move |window: &WindowController, _, _| {
+        selfish.add_action_entries([gio::ActionEntry::builder("open")
+            .activate(move |window: &WindowController, _, _| {
                 let callback_self = callback_self.clone();
 
-                picker.open(Some(window), Some(&gio::Cancellable::new()), move |file_or_error| {
-                    let maybe_error: Result<(), Box<dyn Error>> = (|| {
-                        callback_self.open_document(file_or_error?)?;
-                        Ok(())
-                    })();
+                picker.open(
+                    Some(window),
+                    Some(&gio::Cancellable::new()),
+                    move |file_or_error| {
+                        let maybe_error: Result<(), Box<dyn Error>> = (|| {
+                            callback_self.open_document(file_or_error?)?;
+                            Ok(())
+                        })();
 
-                    if let Err(e) = maybe_error {
-                        eprintln!("{:?}", e);
-                    }
-                });
-            }).build()
-        ]);
-
-        let factory = selfish.imp().navigation_factory.clone();
-
-        factory.connect_setup(|_factory, list_item| {
-            let label = gtk4::Label::new(None);
-            let tree_expander = gtk4::TreeExpander::builder().build();
-
-            tree_expander.set_child(Some(&label));
-
-            let list_item = list_item.downcast_ref::<gtk4::ListItem>().expect("list item");
-            
-            list_item.set_child(Some(&tree_expander));
-            list_item.set_property("focusable", false);
-        });
-
-        factory.connect_bind(|_factory, list_item| {
-            let list_item = list_item.downcast_ref::<gtk4::ListItem>().expect("list item");
-
-            let mut maybe_nav = list_item.item().expect("list items to have a child");
-            while maybe_nav.clone().downcast::<NavigationItem>().is_err() {
-                let list_item = maybe_nav.downcast::<gtk4::TreeListRow>().expect("valid child list item");
-                if let Some(child) = list_item.item() {
-                    maybe_nav = child;
-                } else {
-                    panic!("No navigation child!");
-                }
-            }
-            
-            //TODO: TreeItemStore gives you TreeListRows instead of your actual item type.
-            //We need to keep unwrapping it until we get a NavigationItem or run out of items.
-
-            let nav = maybe_nav.downcast::<NavigationItem>().expect("our own child");
-            let tree_item = list_item.child().and_downcast::<gtk4::TreeExpander>().expect("our own tree expander");
-            let label = tree_item.child().and_downcast::<gtk4::Label>().expect("our own label");
-
-            label.set_label(match nav.imp().path.borrow().as_ref().expect("a path") {
-                PathComponent::Section(Section::ModelTextures) => "Textures",
-                PathComponent::Section(Section::PuppetMeta) => "Metadata",
-                PathComponent::Section(Section::PuppetNode) => "Nodes",
-                PathComponent::Section(Section::PuppetParams) => "Params",
-                PathComponent::Section(Section::PuppetPhysics) => "Physics",
-                PathComponent::Section(Section::VendorData) => "VendorData",
-            });
-        });
-
-        selfish.populate_navigation();
+                        if let Err(e) = maybe_error {
+                            eprintln!("{:?}", e);
+                        }
+                    },
+                );
+            })
+            .build()]);
 
         selfish
     }
@@ -157,6 +111,8 @@ impl WindowController {
 
         self.imp().state.borrow_mut().open_doc = Some(Document::open(stream_adapter)?);
 
+        self.populate_navigation();
+
         Ok(())
     }
 
@@ -169,13 +125,92 @@ impl WindowController {
         let root_list = state.root_list.clone().unwrap();
 
         if state.navigation_tree.is_none() {
-            state.navigation_tree = Some(gtk4::TreeListModel::new(root_list.clone(), false, false, |node| {
-                //TODO: This creates child lists
-                None
-            }));
+            let callback_self = self.clone();
+            let navigation_tree =
+                gtk4::TreeListModel::new(root_list.clone(), false, false, move |node| {
+                    let nav = node
+                        .clone()
+                        .downcast::<NavigationItem>()
+                        .expect("our own child");
+                    let state = callback_self.imp().state.borrow();
+                    let document = state.open_doc.as_ref();
 
-            self.imp().navigation_selection.set_model(state.navigation_tree.as_ref());
+                    if let Some(document) = document {
+                        nav.child_list(document)
+                    } else {
+                        None
+                    }
+                });
+            state.navigation_tree = Some(navigation_tree.clone());
+
+            self.imp()
+                .navigation_selection
+                .set_model(Some(&navigation_tree));
         }
+
+        drop(state);
+
+        let factory = self.imp().navigation_factory.clone();
+        let factory_callback_self = self.clone();
+
+        factory.connect_setup(|_factory, list_item| {
+            let label = gtk4::Label::new(None);
+            let tree_expander = gtk4::TreeExpander::builder().build();
+
+            tree_expander.set_child(Some(&label));
+
+            let list_item = list_item
+                .downcast_ref::<gtk4::ListItem>()
+                .expect("list item");
+
+            list_item.set_child(Some(&tree_expander));
+            list_item.set_property("focusable", false);
+        });
+
+        factory.connect_bind(move |_factory, list_item| {
+            let list_item = list_item
+                .downcast_ref::<gtk4::ListItem>()
+                .expect("list item");
+
+            let mut maybe_nav = list_item.item().expect("list items to have a child");
+            let mut tree_list_row = None;
+            while maybe_nav.clone().downcast::<NavigationItem>().is_err() {
+                let tlr = maybe_nav
+                    .downcast::<gtk4::TreeListRow>()
+                    .expect("valid child list item");
+                tree_list_row = Some(tlr.clone());
+                if let Some(child) = tlr.item() {
+                    maybe_nav = child;
+                } else {
+                    panic!("No navigation child!");
+                }
+            }
+
+            //TODO: TreeItemStore gives you TreeListRows instead of your actual item type.
+            //We need to keep unwrapping it until we get a NavigationItem or run out of items.
+
+            let nav = maybe_nav
+                .downcast::<NavigationItem>()
+                .expect("our own child");
+            let tree_item = list_item
+                .child()
+                .and_downcast::<gtk4::TreeExpander>()
+                .expect("our own tree expander");
+
+            tree_item.set_list_row(tree_list_row.as_ref());
+
+            let label = tree_item
+                .child()
+                .and_downcast::<gtk4::Label>()
+                .expect("our own label");
+            let state = factory_callback_self.imp().state.borrow();
+
+            if let Some(document) = state.open_doc.as_ref() {
+                label.set_label(nav.name(&document).trim_nulls());
+            } else {
+                label.set_label("Wot! No document?");
+            }
+        });
 
         root_list.extend_from_slice(&[
             NavigationItem::new(PathComponent::Section(Section::PuppetMeta)),

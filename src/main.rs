@@ -1,12 +1,13 @@
-use gtk4;
-use gtk4::prelude::*;
 use gio;
 use glib;
+use gtk4;
+use gtk4::prelude::*;
 
 mod document;
-mod window;
 mod io_adapter;
 mod navigation_item;
+mod string_ext;
+mod window;
 
 use crate::window::WindowController;
 

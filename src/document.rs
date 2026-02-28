@@ -1,17 +1,17 @@
-use std::path::{Path, PathBuf};
-use std::fs::File;
-use std::error::Error;
-use std::io::Read;
-use inox2d::puppet::Puppet;
-use inox2d::model::{ModelTexture, VendorData};
 use inox2d::formats::inp::parse_inp_parts;
+use inox2d::model::{ModelTexture, VendorData};
+use inox2d::puppet::Puppet;
 use json::JsonValue;
+use std::error::Error;
+use std::fs::File;
+use std::io::Read;
+use std::path::{Path, PathBuf};
 
 pub struct Document {
     puppet_json: JsonValue,
-    puppet_data: Puppet,
+    pub(crate) puppet_data: Puppet,
     textures: Vec<ModelTexture>,
-    vendors: Vec<VendorData>
+    vendors: Vec<VendorData>,
 }
 
 impl Document {
@@ -23,7 +23,7 @@ impl Document {
             puppet_json,
             puppet_data,
             textures,
-            vendors
+            vendors,
         })
     }
 }

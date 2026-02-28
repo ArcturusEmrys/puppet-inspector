@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <interface>
-    <template class="WindowController" parent="GtkApplicationWindow">
+    <template class="PIWindowController" parent="GtkApplicationWindow">
         <child>
             <object class="GtkPaned">
                 <property name="start_child">
@@ -32,6 +32,7 @@
                 </property>
             </object>
         </child>
+        <property name="title">Puppet Inspector</property>
         <property name="titlebar">
             <object class="GtkHeaderBar">
                 <child type="start">
