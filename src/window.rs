@@ -130,7 +130,6 @@ impl WindowController {
 
     pub fn populate_navigation(&self) {
         let mut state = self.imp().state.borrow_mut();
-        let document = state.open_doc.clone().unwrap();
         if state.root_list.is_none() {
             state.root_list = Some(gio::ListStore::builder().build());
         }
@@ -232,7 +231,7 @@ impl WindowController {
         ]);
 
         let navigation_selection = self.imp().navigation_selection.clone();
-        let detail_view = self.imp().detail_view.clone();
+        let callback_self = self.clone();
         navigation_selection.connect_selection_changed(move |model, position, count| {
             for position in position..position + count {
                 if !model.is_selected(position) {
@@ -247,14 +246,25 @@ impl WindowController {
                         .item();
                     if let Some(item) = item {
                         let item = item.downcast::<NavigationItem>().expect("nav item");
-                        while detail_view.first_child().is_some() {
-                            detail_view.remove(&detail_view.first_child().unwrap());
-                        }
-
-                        detail_view.append(&item.child_inspector(document.clone()));
+                        callback_self.populate_detail(item);
                     }
                 }
             }
         });
+
+        self.populate_detail(NavigationItem::new(PathComponent::Section(
+            Section::PuppetMeta,
+        )));
+    }
+
+    fn populate_detail(&self, item: NavigationItem) {
+        let detail_view = self.imp().detail_view.clone();
+        let document = self.imp().state.borrow().open_doc.clone().unwrap();
+
+        while detail_view.first_child().is_some() {
+            detail_view.remove(&detail_view.first_child().unwrap());
+        }
+
+        detail_view.append(&item.child_inspector(document));
     }
 }
