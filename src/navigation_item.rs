@@ -4,10 +4,10 @@ use gtk4::subclass::prelude::*;
 use inox2d;
 use std::borrow::Cow;
 use std::cell::RefCell;
-use std::fmt::{Debug, Error as FmtError, Formatter};
+use std::fmt::Debug;
 use std::sync::Arc;
 
-use crate::detail_views::{MetadataInspector, PhysicsInspector};
+use crate::detail_views::{MetadataInspector, NodeInspector, PhysicsInspector};
 use crate::document::Document;
 
 #[derive(Debug)]
@@ -121,6 +121,7 @@ impl NavigationItem {
             PathComponent::Section(Section::PuppetPhysics) => {
                 PhysicsInspector::new(document).into()
             }
+            PathComponent::PuppetNode(node) => NodeInspector::new(document, *node).into(),
             path => gtk4::Label::builder()
                 .label(format!("Not yet implemented: {:?}", path))
                 .build()
