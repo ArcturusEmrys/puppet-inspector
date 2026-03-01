@@ -7,8 +7,12 @@ edition = "2024"
 gtk4 = { version = "0.11.0", features = ["v4_10"] }
 glib = { version = "0.22.0" }
 gio = { version = "0.22.1" }
+gdk4 = { version = "0.11.0", features = ["v4_10"] }
 inox2d = { git = "https://github.com/ArcturusEmrys/inox2d", rev = "14f4fab5d975e60261e22b8b7347f0c54123c724" }
 json = "0.12.4"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62.2", features = ["UI_ViewManagement"] }
 
 [build-dependencies]
 glib-build-tools = "0.22.0"

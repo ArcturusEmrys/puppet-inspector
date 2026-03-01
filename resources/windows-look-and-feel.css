@@ -1,0 +1,8 @@
+window {
+    background: var(--Windows-background);
+    color: var(--Windows-foreground);
+}
+
+headerbar {
+    background: var(--Windows-accent);
+}
