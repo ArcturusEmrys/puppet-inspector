@@ -1,9 +1,217 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <interface>
-    <template class="PIPuppetMetadataInspector" parent="GtkBox">
+    <template class="PIPuppetMetadataInspector" parent="GtkGrid">
+        <property name="hexpand">true</property>
+        <property name="vexpand">true</property>
         <child>
             <object class="GtkLabel">
-                <property name="label">Metadata inspector under construction</property>
+                <property name="label">Name</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">0</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkTextView" id="name_field">
+                <property name="hexpand">true</property>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">0</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">Version</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">1</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkTextView" id="version_field">
+                <property name="hexpand">true</property>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">1</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">Rigger</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">2</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkTextView" id="rigger_field">
+                <property name="hexpand">true</property>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">2</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">Artist</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">3</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkTextView" id="artist_field">
+                <property name="hexpand">true</property>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">3</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">Usage rights</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">4</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkBox">
+                <!-- Todo: checkboxes per usage right -->
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">4</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">Copyright</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">5</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkTextView" id="copyright_field">
+                <property name="hexpand">true</property>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">5</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">License</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">6</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkTextView" id="license_field">
+                <property name="hexpand">true</property>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">6</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">Contact</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">7</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkTextView" id="contact_field">
+                <property name="hexpand">true</property>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">7</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">Reference</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">8</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkTextView" id="reference_field">
+                <property name="hexpand">true</property>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">8</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">Thumbnail</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">9</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkBox">
+                <property name="hexpand">true</property>
+                <!-- TOOD: Some kind of texture preview / selection tool-->
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">9</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">Preserve Pixels?</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">10</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">(TODO)</property>
+                <property name="hexpand">true</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">10</property>
+                </layout>
             </object>
         </child>
     </template>
