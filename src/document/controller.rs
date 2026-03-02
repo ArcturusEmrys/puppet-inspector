@@ -40,6 +40,8 @@ pub struct DocumentControllerImp {
     json_selection: TemplateChild<gtk4::SingleSelection>,
     #[template_child]
     detail_view: TemplateChild<gtk4::ScrolledWindow>,
+    #[template_child]
+    tabs: TemplateChild<gtk4::Notebook>,
     state: RefCell<DocumentControllerState>,
 }
 
@@ -190,6 +192,30 @@ impl DocumentController {
         });
 
         self.populate_detail(NavigationItem::new(Path::Section(Section::PuppetMeta)));
+
+        let notebook_self = self.clone();
+        self.imp()
+            .tabs
+            .connect_switch_page(move |note, page, page_num| {
+                let model = match page_num {
+                    0 => &notebook_self.imp().navigation_selection, //Resources page
+                    1 => &notebook_self.imp().json_selection,       //JSON page
+                    unk => panic!("Unknown page {}", unk),
+                };
+
+                if let Some((_, selected_id)) = gtk4::BitsetIter::init_first(&model.selection()) {
+                    let tree_row = model.item(selected_id).expect("valid selection");
+                    let item = tree_row
+                        .downcast::<gtk4::TreeListRow>()
+                        .expect("tree row")
+                        .item()
+                        .expect("nav item obj")
+                        .downcast::<NavigationItem>()
+                        .expect("nav item");
+
+                    notebook_self.populate_detail(item);
+                }
+            });
     }
 
     fn connect_factory(

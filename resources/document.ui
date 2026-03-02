@@ -6,7 +6,7 @@
                 <property name="hexpand">true</property>
                 <property name="vexpand">true</property>
                 <property name="start_child">
-                    <object class="GtkNotebook">
+                    <object class="GtkNotebook" id="tabs">
                         <child>
                             <object class="GtkScrolledWindow">
                                 <child>
@@ -31,7 +31,7 @@
                         </child>
                         <child type="tab">
                             <object class="GtkLabel">
-                                <property name="label">Inspector</property>
+                                <property name="label">Resources</property>
                             </object>
                         </child>
                         <child>
