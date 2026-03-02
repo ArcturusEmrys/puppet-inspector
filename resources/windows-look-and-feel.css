@@ -22,6 +22,15 @@ windowcontrols button {
     margin: 0;
 }
 
+headerbar:backdrop {
+    background: var(--Windows-background);
+    color: var(--Windows-foreground);
+}
+
+windowcontrols:backdrop button {
+    color: var(--Windows-foreground);
+}
+
 windowcontrols button:hover {
     background: var(--window_control_hover);
 }
