@@ -7,6 +7,9 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
+mod controller;
+pub use controller::DocumentController;
+
 pub struct Document {
     puppet_json: JsonValue,
     pub(crate) puppet_data: Puppet,

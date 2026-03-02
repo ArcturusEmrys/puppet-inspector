@@ -4,6 +4,7 @@
         <file compressed="true">look-and-feel.css</file>
         <file compressed="true">windows-look-and-feel.css</file>
         <file compressed="true" preprocess="xml-stripblanks">window.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">document.ui</file>
         <file compressed="true" preprocess="xml-stripblanks">metadata_inspector.ui</file>
         <file compressed="true" preprocess="xml-stripblanks">physics_inspector.ui</file>
         <file compressed="true" preprocess="xml-stripblanks">node_inspector.ui</file>

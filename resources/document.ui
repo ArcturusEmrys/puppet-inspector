@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<interface>
+    <template class="PIDocumentController" parent="GtkBox">
+        <child>
+            <object class="GtkPaned">
+                <property name="hexpand">true</property>
+                <property name="vexpand">true</property>
+                <property name="start_child">
+                    <object class="GtkScrolledWindow">
+                        <child>
+                            <object class="GtkListView">
+                                <property name="factory">
+                                    <object class="GtkSignalListItemFactory" id="navigation_factory">
+                                    </object>
+                                </property>
+                                <property name="model">
+                                    <object class="GtkSingleSelection" id="navigation_selection">
+                                        <!-- We can NOT build the tree model inside here for reasons -->
+                                        <property name="model">
+                                            <object class="GtkTreeListModel">
+                                                <property name="passthrough">false</property>
+                                            </object>
+                                        </property>
+                                    </object>
+                                </property>
+                            </object>
+                        </child>
+                    </object>
+                </property>
+                <property name="end_child">
+                    <object class="GtkScrolledWindow" id="detail_view">
+                    </object>
+                </property>
+            </object>
+        </child>
+    </template>
+</interface>
