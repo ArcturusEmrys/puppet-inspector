@@ -35,8 +35,25 @@
                             </object>
                         </child>
                         <child>
-                            <object class="GtkLabel">
-                                <property name="label">JSON inspector not yet implemented</property>
+                            <object class="GtkScrolledWindow">
+                                <child>
+                                    <object class="GtkListView">
+                                        <property name="factory">
+                                            <object class="GtkSignalListItemFactory" id="json_factory">
+                                            </object>
+                                        </property>
+                                        <property name="model">
+                                            <object class="GtkSingleSelection" id="json_selection">
+                                                <!-- We can NOT build the tree model inside here for reasons -->
+                                                <property name="model">
+                                                    <object class="GtkTreeListModel">
+                                                        <property name="passthrough">false</property>
+                                                    </object>
+                                                </property>
+                                            </object>
+                                        </property>
+                                    </object>
+                                </child>
                             </object>
                         </child>
                         <child type="tab">

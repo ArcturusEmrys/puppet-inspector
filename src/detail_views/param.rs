@@ -77,7 +77,7 @@ impl ParamInspector {
         self.imp()
             .name_field
             .buffer()
-            .set_text(&param.name.trim_nulls());
+            .set_text(param.name.escape_nulls().as_ref());
         self.imp()
             .uuid_label
             .set_label(&format!("{}", param.uuid.0));

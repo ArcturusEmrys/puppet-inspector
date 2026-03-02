@@ -83,7 +83,7 @@ impl NodeInspector {
         self.imp()
             .name_field
             .buffer()
-            .set_text(node.name.trim_nulls());
+            .set_text(node.name.escape_nulls().as_ref());
         self.imp()
             .uuid_label
             .set_label(&format!("{}", Into::<u32>::into(uuid)));

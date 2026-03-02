@@ -13,7 +13,7 @@ use std::cell::RefCell;
 use std::sync::Arc;
 
 use crate::document::Document;
-use crate::navigation_item::{NavigationItem, PathComponent, Section};
+use crate::navigation_item::{NavigationItem, Path, Section};
 use crate::string_ext::StrExt;
 
 /// For some reason, glib-rs does not support mutating private/impl structs.
@@ -22,7 +22,9 @@ use crate::string_ext::StrExt;
 pub struct DocumentControllerState {
     open_doc: Option<Arc<Document>>,
     navigation_tree: Option<gtk4::TreeListModel>,
-    root_list: Option<gio::ListStore>,
+    json_tree: Option<gtk4::TreeListModel>,
+    root_nav_list: Option<gio::ListStore>,
+    root_json_list: Option<gio::ListStore>,
 }
 
 #[derive(CompositeTemplate, Default)]
@@ -32,6 +34,10 @@ pub struct DocumentControllerImp {
     navigation_factory: TemplateChild<gtk4::SignalListItemFactory>,
     #[template_child]
     navigation_selection: TemplateChild<gtk4::SingleSelection>,
+    #[template_child]
+    json_factory: TemplateChild<gtk4::SignalListItemFactory>,
+    #[template_child]
+    json_selection: TemplateChild<gtk4::SingleSelection>,
     #[template_child]
     detail_view: TemplateChild<gtk4::ScrolledWindow>,
     state: RefCell<DocumentControllerState>,
@@ -80,16 +86,19 @@ impl DocumentController {
 
     pub fn populate_navigation(&self) {
         let mut state = self.imp().state.borrow_mut();
-        if state.root_list.is_none() {
-            state.root_list = Some(gio::ListStore::builder().build());
+        if state.root_nav_list.is_none() {
+            state.root_nav_list = Some(gio::ListStore::builder().build());
+        }
+        if state.root_json_list.is_none() {
+            state.root_json_list = Some(gio::ListStore::builder().build());
         }
 
-        let root_list = state.root_list.clone().unwrap();
+        let root_nav_list = state.root_nav_list.clone().unwrap();
 
         if state.navigation_tree.is_none() {
             let callback_self = self.clone();
             let navigation_tree =
-                gtk4::TreeListModel::new(root_list.clone(), false, false, move |node| {
+                gtk4::TreeListModel::new(root_nav_list.clone(), false, false, move |node| {
                     let nav = node
                         .clone()
                         .downcast::<NavigationItem>()
@@ -110,9 +119,84 @@ impl DocumentController {
                 .set_model(Some(&navigation_tree));
         }
 
+        let root_json_list = state.root_json_list.clone().unwrap();
+
+        if state.json_tree.is_none() {
+            let callback_self = self.clone();
+            let json_tree =
+                gtk4::TreeListModel::new(root_json_list.clone(), false, false, move |node| {
+                    let nav = node
+                        .clone()
+                        .downcast::<NavigationItem>()
+                        .expect("our own child");
+                    let state = callback_self.imp().state.borrow();
+                    let document = state.open_doc.as_ref();
+
+                    if let Some(document) = document {
+                        nav.child_list(document)
+                    } else {
+                        None
+                    }
+                });
+            state.json_tree = Some(json_tree.clone());
+
+            self.imp().json_selection.set_model(Some(&json_tree));
+        }
+
+        let mut root_json = vec![NavigationItem::new(Path::PuppetJson(Vec::new()))];
+        for (index, _) in state.open_doc.as_ref().unwrap().vendors.iter().enumerate() {
+            root_json.push(NavigationItem::new(Path::VendorJson(index, Vec::new())))
+        }
+
+        root_nav_list.extend_from_slice(&[
+            NavigationItem::new(Path::Section(Section::PuppetMeta)),
+            NavigationItem::new(Path::Section(Section::PuppetPhysics)),
+            NavigationItem::new(Path::Section(Section::PuppetNode)),
+            NavigationItem::new(Path::Section(Section::PuppetParams)),
+            NavigationItem::new(Path::Section(Section::ModelTextures)),
+            NavigationItem::new(Path::Section(Section::VendorData)),
+        ]);
+
+        root_json_list.extend_from_slice(root_json.as_slice());
+
         drop(state);
 
-        let factory = self.imp().navigation_factory.clone();
+        self.connect_factory(
+            self.imp().navigation_factory.clone(),
+            &self.imp().navigation_selection,
+        );
+        self.connect_factory(self.imp().json_factory.clone(), &self.imp().json_selection);
+
+        let json_selection = self.imp().json_selection.clone();
+        let callback_self = self.clone();
+        json_selection.connect_selection_changed(move |model, position, count| {
+            for position in position..position + count {
+                if !model.is_selected(position) {
+                    continue;
+                }
+
+                let tree_row = model.item(position);
+                if let Some(tree_row) = tree_row {
+                    let item = tree_row
+                        .downcast::<gtk4::TreeListRow>()
+                        .expect("tree row")
+                        .item();
+                    if let Some(item) = item {
+                        let item = item.downcast::<NavigationItem>().expect("nav item");
+                        callback_self.populate_detail(item);
+                    }
+                }
+            }
+        });
+
+        self.populate_detail(NavigationItem::new(Path::Section(Section::PuppetMeta)));
+    }
+
+    fn connect_factory(
+        &self,
+        factory: gtk4::SignalListItemFactory,
+        selection: &gtk4::SingleSelection,
+    ) {
         let factory_callback_self = self.clone();
 
         factory.connect_setup(|_factory, list_item| {
@@ -165,24 +249,14 @@ impl DocumentController {
             let state = factory_callback_self.imp().state.borrow();
 
             if let Some(document) = state.open_doc.as_ref() {
-                label.set_label(nav.name(&document).trim_nulls());
+                label.set_label(nav.name(&document).escape_nulls().as_ref());
             } else {
                 label.set_label("Wot! No document?");
             }
         });
 
-        root_list.extend_from_slice(&[
-            NavigationItem::new(PathComponent::Section(Section::PuppetMeta)),
-            NavigationItem::new(PathComponent::Section(Section::PuppetPhysics)),
-            NavigationItem::new(PathComponent::Section(Section::PuppetNode)),
-            NavigationItem::new(PathComponent::Section(Section::PuppetParams)),
-            NavigationItem::new(PathComponent::Section(Section::ModelTextures)),
-            NavigationItem::new(PathComponent::Section(Section::VendorData)),
-        ]);
-
-        let navigation_selection = self.imp().navigation_selection.clone();
         let callback_self = self.clone();
-        navigation_selection.connect_selection_changed(move |model, position, count| {
+        selection.connect_selection_changed(move |model, position, count| {
             for position in position..position + count {
                 if !model.is_selected(position) {
                     continue;
@@ -201,10 +275,6 @@ impl DocumentController {
                 }
             }
         });
-
-        self.populate_detail(NavigationItem::new(PathComponent::Section(
-            Section::PuppetMeta,
-        )));
     }
 
     fn populate_detail(&self, item: NavigationItem) {

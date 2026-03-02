@@ -9,10 +9,10 @@ mod controller;
 pub use controller::DocumentController;
 
 pub struct Document {
-    puppet_json: JsonValue,
+    pub(crate) puppet_json: JsonValue,
     pub(crate) puppet_data: Puppet,
     textures: Vec<ModelTexture>,
-    vendors: Vec<VendorData>,
+    pub(crate) vendors: Vec<VendorData>,
 }
 
 impl Document {

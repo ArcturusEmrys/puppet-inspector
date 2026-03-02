@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<interface>
+    <template class="PIPuppetJsonInspector" parent="GtkBox">
+        <property name="hexpand">true</property>
+        <property name="vexpand">true</property>
+        <child>
+            <object class="GtkColumnView" id="column_view">
+                <property name="hexpand">true</property>
+                <property name="vexpand">true</property>
+                <property name="css-classes">data-table</property>
+                <property name="model">
+                    <object class="GtkSingleSelection" id="selection">
+                    </object>
+                </property>
+                <child>
+                    <object class="GtkColumnViewColumn">
+                        <property name="title">Key</property>
+                        <property name="factory">
+                            <object class="GtkSignalListItemFactory" id="key_factory">
+                            </object>
+                        </property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkColumnViewColumn">
+                        <property name="title">Type</property>
+                        <property name="factory">
+                            <object class="GtkSignalListItemFactory" id="type_factory">
+                            </object>
+                        </property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkColumnViewColumn">
+                        <property name="title">Value</property>
+                        <property name="factory">
+                            <object class="GtkSignalListItemFactory" id="value_factory">
+                            </object>
+                        </property>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </template>
+</interface>

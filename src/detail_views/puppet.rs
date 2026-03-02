@@ -86,12 +86,15 @@ impl MetadataInspector {
                 .name
                 .as_deref()
                 .unwrap_or("")
-                .trim_nulls(),
+                .escape_nulls()
+                .as_ref(),
         );
         self.imp()
             .version_field
             .buffer()
-            .set_text(document.puppet_data.meta.version.trim_nulls());
+            .set_text(document.puppet_data.meta.version
+                .escape_nulls()
+                .as_ref());
         self.imp().rigger_field.buffer().set_text(
             document
                 .puppet_data
@@ -99,7 +102,8 @@ impl MetadataInspector {
                 .rigger
                 .as_deref()
                 .unwrap_or("")
-                .trim_nulls(),
+                .escape_nulls()
+                .as_ref(),
         );
         self.imp().artist_field.buffer().set_text(
             document
@@ -108,7 +112,8 @@ impl MetadataInspector {
                 .artist
                 .as_deref()
                 .unwrap_or("")
-                .trim_nulls(),
+                .escape_nulls()
+                .as_ref(),
         );
         self.imp().copyright_field.buffer().set_text(
             document
@@ -117,7 +122,8 @@ impl MetadataInspector {
                 .copyright
                 .as_deref()
                 .unwrap_or("")
-                .trim_nulls(),
+                .escape_nulls()
+                .as_ref(),
         );
         self.imp().license_field.buffer().set_text(
             document
@@ -126,7 +132,8 @@ impl MetadataInspector {
                 .license_url
                 .as_deref()
                 .unwrap_or("")
-                .trim_nulls(),
+                .escape_nulls()
+                .as_ref(),
         );
         self.imp().contact_field.buffer().set_text(
             document
@@ -135,7 +142,8 @@ impl MetadataInspector {
                 .contact
                 .as_deref()
                 .unwrap_or("")
-                .trim_nulls(),
+                .escape_nulls()
+                .as_ref(),
         );
         self.imp().reference_field.buffer().set_text(
             document
@@ -144,7 +152,8 @@ impl MetadataInspector {
                 .reference
                 .as_deref()
                 .unwrap_or("")
-                .trim_nulls(),
+                .escape_nulls()
+                .as_ref(),
         );
     }
 }
