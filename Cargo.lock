@@ -509,7 +509,7 @@ dependencies = [
 [[package]]
 name = "inox2d"
 version = "0.3.0"
-source = "git+https://github.com/ArcturusEmrys/inox2d?rev=14f4fab5d975e60261e22b8b7347f0c54123c724#14f4fab5d975e60261e22b8b7347f0c54123c724"
+source = "git+https://github.com/ArcturusEmrys/inox2d?rev=9a04b433400f4f427c2d53acf25010b48437d36e#9a04b433400f4f427c2d53acf25010b48437d36e"
 dependencies = [
  "glam",
  "image",

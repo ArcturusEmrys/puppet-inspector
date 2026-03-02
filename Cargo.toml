@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 glib = { version = "0.22.0" }
 gio = { version = "0.22.1" }
-inox2d = { git = "https://github.com/ArcturusEmrys/inox2d", rev = "14f4fab5d975e60261e22b8b7347f0c54123c724" }
+inox2d = { git = "https://github.com/ArcturusEmrys/inox2d", rev = "9a04b433400f4f427c2d53acf25010b48437d36e" }
 json = "0.12.4"
 
 [target.'cfg(not(windows))'.dependencies]

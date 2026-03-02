@@ -7,7 +7,7 @@ use std::cell::RefCell;
 use std::fmt::Debug;
 use std::sync::Arc;
 
-use crate::detail_views::{MetadataInspector, NodeInspector, PhysicsInspector};
+use crate::detail_views::{MetadataInspector, NodeInspector, ParamInspector, PhysicsInspector};
 use crate::document::Document;
 
 #[derive(Debug)]
@@ -122,6 +122,9 @@ impl NavigationItem {
                 PhysicsInspector::new(document).into()
             }
             PathComponent::PuppetNode(node) => NodeInspector::new(document, *node).into(),
+            PathComponent::PuppetParam(param) => {
+                ParamInspector::new(document, param.clone()).into()
+            }
             path => gtk4::Label::builder()
                 .label(format!("Not yet implemented: {:?}", path))
                 .build()

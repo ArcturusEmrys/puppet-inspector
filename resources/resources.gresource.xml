@@ -7,5 +7,6 @@
         <file compressed="true" preprocess="xml-stripblanks">metadata_inspector.ui</file>
         <file compressed="true" preprocess="xml-stripblanks">physics_inspector.ui</file>
         <file compressed="true" preprocess="xml-stripblanks">node_inspector.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">param_inspector.ui</file>
     </gresource>
 </gresources>
