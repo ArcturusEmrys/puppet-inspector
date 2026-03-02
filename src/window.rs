@@ -10,21 +10,16 @@ use gtk4::subclass::prelude::*;
 
 use std::cell::RefCell;
 use std::error::Error;
-use std::io::Read;
 
 use std::sync::Arc;
 
 use crate::document::{Document, DocumentController};
-use crate::navigation_item::{NavigationItem, PathComponent, Section};
-use crate::string_ext::StrExt;
 
 /// For some reason, glib-rs does not support mutating private/impl structs.
 /// Hence the mutability hack.
 #[derive(Default)]
 pub struct WindowControllerState {
     open_doc: Option<Arc<Document>>,
-    navigation_tree: Option<gtk4::TreeListModel>,
-    root_list: Option<gio::ListStore>,
 }
 
 #[derive(CompositeTemplate, Default)]

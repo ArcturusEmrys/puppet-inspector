@@ -1,4 +1,3 @@
-use gdk4::prelude::DisplayExtManual;
 use gtk4;
 
 use windows::Foundation::TypedEventHandler;
@@ -25,9 +24,9 @@ trait ColorExt: Sized + Copy {
         let counter_luma = counter.wcag_relative_luma();
 
         if self_luma > counter_luma {
-            ((self_luma + 0.05) / (counter_luma + 0.05))
+            (self_luma + 0.05) / (counter_luma + 0.05)
         } else {
-            ((counter_luma + 0.05) / (self_luma + 0.05))
+            (counter_luma + 0.05) / (self_luma + 0.05)
         }
     }
 
@@ -155,7 +154,6 @@ impl LAFProvider {
         // GTK on Windows does NOT automatically detect dark/light.
         // Which is very bad as it ships with Adwaita look and feel which supports it.
         // Also, for some reason our own CSS doesn't pull color scheme data from settings.
-        let display = gdk4::Display::default().expect("display");
         let color_scheme = if bg_color.contrast(white, black) == white {
             gtk4::InterfaceColorScheme::Dark
         } else {
@@ -214,6 +212,7 @@ impl LAFProvider {
         }}"
         );
 
+        #[allow(deprecated)] //Ubuntu requires 4.10 support
         self.color_css.load_from_data(&css);
     }
 }

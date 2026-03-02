@@ -1,4 +1,3 @@
-use gdk4;
 use gio;
 use glib;
 use gtk4;
@@ -16,7 +15,7 @@ use crate::window::WindowController;
 
 fn main() -> glib::ExitCode {
     gio::resources_register_include!("resources.gresource").expect("valid resource file");
-    gtk4::init();
+    gtk4::init().expect("valid gtk4 state");
 
     look_and_feel::init();
 

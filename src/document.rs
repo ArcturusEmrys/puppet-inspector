@@ -3,9 +3,7 @@ use inox2d::model::{ModelTexture, VendorData};
 use inox2d::puppet::Puppet;
 use json::JsonValue;
 use std::error::Error;
-use std::fs::File;
 use std::io::Read;
-use std::path::{Path, PathBuf};
 
 mod controller;
 pub use controller::DocumentController;

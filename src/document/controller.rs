@@ -9,8 +9,6 @@ use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
 
 use std::cell::RefCell;
-use std::error::Error;
-use std::io::Read;
 
 use std::sync::Arc;
 
