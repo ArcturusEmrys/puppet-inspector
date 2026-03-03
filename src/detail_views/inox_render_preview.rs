@@ -1,4 +1,5 @@
 use glib;
+use glow::HasContext;
 use gtk4;
 use gtk4::CompositeTemplate;
 use gtk4::prelude::*;
@@ -7,11 +8,13 @@ use gtk4::subclass::prelude::*;
 use glib::subclass::InitializingObject;
 
 use std::cell::RefCell;
-use std::ffi::c_void;
+use std::ffi::{c_void, CStr};
 use std::ptr::null;
 use std::sync::{Arc, Mutex};
+use std::num::NonZero;
 
 use glow;
+use gl46;
 use inox2d::node::InoxNodeUuid;
 use inox2d::render::InoxRendererExt;
 use inox2d_opengl::OpenglRenderer;
@@ -22,6 +25,7 @@ use crate::string_ext::StrExt;
 struct State {
     document: Arc<Mutex<Document>>,
     renderer: Option<OpenglRenderer>,
+    glfns: Option<gl46::GlFns>
 }
 
 #[derive(CompositeTemplate, Default)]
@@ -68,6 +72,30 @@ glib::wrapper! {
         @implements gtk4::Buildable, gtk4::Orientable, gtk4::ConstraintTarget, gtk4::Accessible;
 }
 
+#[allow(unsafe_op_in_unsafe_fn)]
+unsafe fn lookup_gl_symbol(symbol: &CStr) -> *const c_void {
+    #[cfg(windows)]
+    {
+        match windows::Win32::Graphics::OpenGL::wglGetProcAddress(
+            windows::core::PCSTR::from_raw(symbol.as_ptr() as *const u8),
+        ) {
+            Some(fun) => fun as *const c_void,
+            None => null::<c_void>(),
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        eprintln!("GL not implemented on this platform");
+        null::<c_void>()
+    }
+}
+
+#[allow(unsafe_op_in_unsafe_fn)]
+unsafe fn lookup_gl_symbol_from_ptr(p: *const u8) -> *const c_void {
+    let c_str = std::ffi::CStr::from_ptr(p as *const i8);
+    lookup_gl_symbol(c_str) as *mut c_void
+}
+
 impl InoxRenderPreview {
     pub fn new(document: Arc<Mutex<Document>>) -> Self {
         let selfish: Self = glib::Object::builder().build();
@@ -77,6 +105,7 @@ impl InoxRenderPreview {
         *selfish.imp().state.borrow_mut() = Some(State {
             document,
             renderer: None,
+            glfns: None
         });
         selfish.bind();
 
@@ -109,23 +138,15 @@ impl InoxRenderPreview {
             //
             // Also we have to do this AFTER context creation or WGL gets
             // grumpy.
-            let mut gl = unsafe {
-                glow::Context::from_loader_function_cstr(|symbol| {
-                    #[cfg(windows)]
-                    {
-                        match windows::Win32::Graphics::OpenGL::wglGetProcAddress(
-                            windows::core::PCSTR::from_raw(symbol.as_ptr() as *const u8),
-                        ) {
-                            Some(fun) => fun as *const c_void,
-                            None => null::<c_void>(),
-                        }
-                    }
-                    #[cfg(not(windows))]
-                    {
-                        realize_self.display_error("GL not implemented on this platform");
-                        null::<c_void>()
-                    }
-                })
+            // 
+            // SAFETY: I have no idea what happens if you give this a bad name
+            let (mut gl, native_gl) = unsafe {
+                let gl = glow::Context::from_loader_function_cstr(|p| lookup_gl_symbol(p));
+                let stupid_box = Box::new(|p| lookup_gl_symbol_from_ptr(p));
+                let native_lookup: &dyn Fn(*const u8) -> *const c_void = &stupid_box;
+
+                let native_gl = gl46::GlFns::load_from(native_lookup).expect("native GL");
+                (gl, native_gl)
             };
 
             // TODO: GLDebug logging
@@ -138,12 +159,17 @@ impl InoxRenderPreview {
                 Ok(mut renderer) => {
                     renderer.camera.scale.x = 0.15;
                     renderer.camera.scale.y = 0.15;
+
+                    let mut state_outer = 
                     realize_self
                         .imp()
                         .state
-                        .borrow_mut()
+                        .borrow_mut();
+                    let state = state_outer
                         .as_mut()
-                        .unwrap()
+                        .unwrap();
+                    state.glfns = Some(native_gl);
+                    state
                         .renderer = Some(renderer)
                 }
                 Err(e) => {
@@ -156,6 +182,11 @@ impl InoxRenderPreview {
         self.imp()
             .gl_view
             .connect_resize(move |gl_area, width, height| {
+                gl_area.make_current();
+                if let Some(e) = gl_area.error() {
+                    resize_self.display_error(e.message());
+                }
+
                 if width > 0 && height > 0 {
                     let mut state_outer = resize_self.imp().state.borrow_mut();
                     let state = state_outer.as_mut().unwrap();
@@ -177,12 +208,24 @@ impl InoxRenderPreview {
             document.model.puppet.end_frame(1.0);
 
             let renderer = state.renderer.as_mut().unwrap();
-            //TODO: The render trait update branch will impact this code.
-            renderer.on_begin_draw(&document.model.puppet);
-            renderer.draw(&document.model.puppet);
-            renderer.on_end_draw(&document.model.puppet);
+            let native_gl = state.glfns.as_ref().unwrap();
 
-            glib::Propagation::Stop
+            let mut buffer_id = 0;
+            unsafe {
+                native_gl.GetIntegerv(gl46::GL_DRAW_FRAMEBUFFER_BINDING, &mut buffer_id);
+                native_gl.ClearColor(0.0, 0.0, 0.0, 255.0);
+                native_gl.Clear(gl46::GL_COLOR_BUFFER_BIT);
+            }
+
+            renderer.set_surface_framebuffer(NonZero::new(buffer_id as u32).map(|b| glow::NativeFramebuffer(b)));
+
+            renderer.draw(&document.model.puppet).expect("successful draw");
+
+            unsafe {
+                native_gl.Flush();
+            }
+
+            glib::Propagation::Proceed
         });
     }
 }

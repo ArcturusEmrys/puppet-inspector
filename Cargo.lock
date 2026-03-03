@@ -78,6 +78,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
+name = "chlorine"
+version = "1.0.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c00d31b1d19317b4777ec879192d3745bd97d05262b4b19cb1dda284b9d22f19"
+
+[[package]]
 name = "crc32fast"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -274,6 +280,15 @@ dependencies = [
  "libc",
  "system-deps",
  "windows-sys",
+]
+
+[[package]]
+name = "gl46"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6155ed8943ffcd2a91edad40340e238a7776f8f2d04338b781aa65b7b110236"
+dependencies = [
+ "chlorine",
 ]
 
 [[package]]
@@ -527,7 +542,7 @@ dependencies = [
 [[package]]
 name = "inox2d"
 version = "0.3.0"
-source = "git+https://github.com/ArcturusEmrys/inox2d?rev=9a04b433400f4f427c2d53acf25010b48437d36e#9a04b433400f4f427c2d53acf25010b48437d36e"
+source = "git+https://github.com/ArcturusEmrys/inox2d?rev=418d48c82f2331a832e942c4348b8fae0392943f#418d48c82f2331a832e942c4348b8fae0392943f"
 dependencies = [
  "glam",
  "image",
@@ -541,7 +556,7 @@ dependencies = [
 [[package]]
 name = "inox2d-opengl"
 version = "0.3.0"
-source = "git+https://github.com/ArcturusEmrys/inox2d?rev=9a04b433400f4f427c2d53acf25010b48437d36e#9a04b433400f4f427c2d53acf25010b48437d36e"
+source = "git+https://github.com/ArcturusEmrys/inox2d?rev=418d48c82f2331a832e942c4348b8fae0392943f#418d48c82f2331a832e942c4348b8fae0392943f"
 dependencies = [
  "glam",
  "glow",
@@ -704,6 +719,7 @@ version = "0.1.0"
 dependencies = [
  "gdk4",
  "gio",
+ "gl46",
  "glib",
  "glib-build-tools",
  "glow",
