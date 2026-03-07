@@ -80,7 +80,11 @@ unsafe fn lookup_gl_symbol(symbol: &CStr) -> *const c_void {
             None => null::<c_void>(),
         }
     }
-    #[cfg(not(windows))]
+    #[cfg(target_os = "linux")]
+    {
+        egl::get_proc_address(symbol.to_str().unwrap()) as *const c_void
+    }
+    #[cfg(all(not(windows), not(target_os = "linux")))]
     {
         eprintln!("GL not implemented on this platform");
         null::<c_void>()
@@ -96,8 +100,6 @@ unsafe fn lookup_gl_symbol_from_ptr(p: *const u8) -> *const c_void {
 impl InoxRenderPreview {
     pub fn new(document: Arc<Mutex<Document>>) -> Self {
         let selfish: Self = glib::Object::builder().build();
-
-        document.lock().unwrap().ensure_render_initialized();
 
         *selfish.imp().state.borrow_mut() = Some(State {
             document,
@@ -122,10 +124,20 @@ impl InoxRenderPreview {
         let realize_self = self.clone();
 
         self.imp().gl_view.connect_realize(move |gl_area| {
+            let annoying_self_borrow = realize_self.imp().state.borrow();
+            let mut document = annoying_self_borrow
+                .as_ref()
+                .unwrap()
+                .document
+                .lock()
+                .unwrap();
+
             gl_area.make_current();
             if let Some(e) = gl_area.error() {
                 realize_self.display_error(e.message());
             }
+
+            document.ensure_render_initialized();
 
             // We need to make a glow::context, but we need to give it access
             // to wgl/glx/egl/etcGetProcAddress. GDK does not allow you to ask

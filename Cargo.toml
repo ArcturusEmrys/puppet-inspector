@@ -12,6 +12,9 @@ json = "0.12.4"
 glow = "0.14.1"
 gl46 = "0.2.1"
 
+[target.'cfg(target_os = "linux")'.dependencies]
+egl = "0.2.7"
+
 [target.'cfg(not(windows))'.dependencies]
 gtk4 = { version = "0.11.0", features = ["v4_10"] }
 gdk4 = { version = "0.11.0", features = ["v4_10"] }

@@ -47,7 +47,7 @@ dependencies = [
  "bitflags",
  "cairo-sys-rs",
  "glib",
- "libc",
+ "libc 0.2.182",
 ]
 
 [[package]]
@@ -57,7 +57,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8b4985713047f5faee02b8db6a6ef32bbb50269ff53c1aee716d1d195b76d54"
 dependencies = [
  "glib-sys",
- "libc",
+ "libc 0.2.182",
  "system-deps",
 ]
 
@@ -90,6 +90,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9481c1c90cbf2ac953f07c8d4a58aa3945c425b7185c9154d67a65e4230da511"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "egl"
+version = "0.2.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a373bc9844200b1ff15bd1b245931d1c20d09d06e4ec09f361171f29a4b0752d"
+dependencies = [
+ "khronos",
+ "libc 0.2.182",
 ]
 
 [[package]]
@@ -204,7 +214,7 @@ dependencies = [
  "gdk-pixbuf-sys",
  "gio",
  "glib",
- "libc",
+ "libc 0.2.182",
 ]
 
 [[package]]
@@ -216,7 +226,7 @@ dependencies = [
  "gio-sys",
  "glib-sys",
  "gobject-sys",
- "libc",
+ "libc 0.2.182",
  "system-deps",
 ]
 
@@ -231,7 +241,7 @@ dependencies = [
  "gdk4-sys",
  "gio",
  "glib",
- "libc",
+ "libc 0.2.182",
  "pango",
 ]
 
@@ -246,7 +256,7 @@ dependencies = [
  "gio-sys",
  "glib-sys",
  "gobject-sys",
- "libc",
+ "libc 0.2.182",
  "pango-sys",
  "pkg-config",
  "system-deps",
@@ -264,7 +274,7 @@ dependencies = [
  "futures-util",
  "gio-sys",
  "glib",
- "libc",
+ "libc 0.2.182",
  "pin-project-lite",
  "smallvec",
 ]
@@ -277,7 +287,7 @@ checksum = "64729ba2772c080448f9f966dba8f4456beeb100d8c28a865ef8a0f2ef4987e1"
 dependencies = [
  "glib-sys",
  "gobject-sys",
- "libc",
+ "libc 0.2.182",
  "system-deps",
  "windows-sys",
 ]
@@ -313,7 +323,7 @@ dependencies = [
  "glib-macros",
  "glib-sys",
  "gobject-sys",
- "libc",
+ "libc 0.2.182",
  "memchr",
  "smallvec",
 ]
@@ -345,7 +355,7 @@ version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48073e3b228419faa80b9b7f7122759d4ab2f44cd52a065fde7ca08f34c03147"
 dependencies = [
- "libc",
+ "libc 0.2.182",
  "system-deps",
 ]
 
@@ -368,7 +378,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18eda93f09d3778f38255b231b17ef67195013a592c91624a4daf8bead875565"
 dependencies = [
  "glib-sys",
- "libc",
+ "libc 0.2.182",
  "system-deps",
 ]
 
@@ -380,7 +390,7 @@ checksum = "c7d1b7881f96869f49808b6adfe906a93a57a34204952253444d68c3208d71f1"
 dependencies = [
  "glib",
  "graphene-sys",
- "libc",
+ "libc 0.2.182",
 ]
 
 [[package]]
@@ -390,7 +400,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "517f062f3fd6b7fd3e57a3f038a74b3c23ca32f51199ff028aa704609943f79c"
 dependencies = [
  "glib-sys",
- "libc",
+ "libc 0.2.182",
  "pkg-config",
  "system-deps",
 ]
@@ -406,7 +416,7 @@ dependencies = [
  "glib",
  "graphene-rs",
  "gsk4-sys",
- "libc",
+ "libc 0.2.182",
  "pango",
 ]
 
@@ -421,7 +431,7 @@ dependencies = [
  "glib-sys",
  "gobject-sys",
  "graphene-sys",
- "libc",
+ "libc 0.2.182",
  "pango-sys",
  "system-deps",
 ]
@@ -443,7 +453,7 @@ dependencies = [
  "gsk4",
  "gtk4-macros",
  "gtk4-sys",
- "libc",
+ "libc 0.2.182",
  "pango",
 ]
 
@@ -473,7 +483,7 @@ dependencies = [
  "gobject-sys",
  "graphene-sys",
  "gsk4-sys",
- "libc",
+ "libc 0.2.182",
  "pango-sys",
  "system-deps",
 ]
@@ -591,6 +601,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "078e285eafdfb6c4b434e0d31e8cfcb5115b651496faca5749b88fafd4f23bfd"
 
 [[package]]
+name = "khronos"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0711aaa80e6ba6eb1fa8978f1f46bfcb38ceb2f3f33f3736efbff39dac89f50"
+dependencies = [
+ "libc 0.1.12",
+]
+
+[[package]]
+name = "libc"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e32a70cf75e5846d53a673923498228bbec6a8624708a9ea5645f075d6276122"
+
+[[package]]
 name = "libc"
 version = "0.2.182"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -654,7 +679,7 @@ checksum = "25d8f224eddef627b896d2f7b05725b3faedbd140e0e8343446f0d34f34238ee"
 dependencies = [
  "gio",
  "glib",
- "libc",
+ "libc 0.2.182",
  "pango-sys",
 ]
 
@@ -666,7 +691,7 @@ checksum = "bbd111a20ca90fedf03e09c59783c679c00900f1d8491cca5399f5e33609d5d6"
 dependencies = [
  "glib-sys",
  "gobject-sys",
- "libc",
+ "libc 0.2.182",
  "system-deps",
 ]
 
@@ -717,6 +742,7 @@ dependencies = [
 name = "puppet-inspector"
 version = "0.1.0"
 dependencies = [
+ "egl",
  "gdk4",
  "gio",
  "gl46",
