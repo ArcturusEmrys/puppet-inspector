@@ -156,7 +156,10 @@ impl DocumentController {
             .iter()
             .enumerate()
         {
-            root_json.push(NavigationItem::new(Path::VendorJson(index, Vec::new())))
+            root_json.push(NavigationItem::new(Path::VendorJson(
+                index as u64,
+                Vec::new(),
+            )))
         }
 
         root_nav_list.extend_from_slice(&[
@@ -205,7 +208,7 @@ impl DocumentController {
         let notebook_self = self.clone();
         self.imp()
             .tabs
-            .connect_switch_page(move |note, page, page_num| {
+            .connect_switch_page(move |_note, _page, page_num| {
                 let model = match page_num {
                     0 => &notebook_self.imp().navigation_selection, //Resources page
                     1 => &notebook_self.imp().json_selection,       //JSON page
@@ -322,5 +325,46 @@ impl DocumentController {
         let document = self.imp().state.borrow().open_doc.clone().unwrap();
 
         detail_view.set_child(Some(&item.child_inspector(document)));
+    }
+
+    pub fn jump_to_path(&self, item: NavigationItem) {
+        let notebook_page = item.notebook_page();
+        let path = item.as_path();
+
+        self.imp().tabs.set_current_page(Some(notebook_page));
+
+        // TODO: Some kind of evil tree walking structure that records the
+        // path for us and then proceeds to open the specific rows in question
+        // As it stands you cannot jump to closed rows
+        match notebook_page {
+            0 => {
+                for (index, row) in self
+                    .imp()
+                    .navigation_selection
+                    .iter::<glib::Object>()
+                    .enumerate()
+                {
+                    let row = row.unwrap().downcast::<gtk4::TreeListRow>().unwrap();
+                    let item = row.item().unwrap().downcast::<NavigationItem>().unwrap();
+
+                    if item.as_path() == path {
+                        self.imp().navigation_selection.set_selected(index as u32);
+                        return;
+                    }
+                }
+            }
+            1 => {
+                for (index, row) in self.imp().json_selection.iter::<glib::Object>().enumerate() {
+                    let row = row.unwrap().downcast::<gtk4::TreeListRow>().unwrap();
+                    let item = row.item().unwrap().downcast::<NavigationItem>().unwrap();
+
+                    if item.as_path() == path {
+                        self.imp().json_selection.set_selected(index as u32);
+                        return;
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 }

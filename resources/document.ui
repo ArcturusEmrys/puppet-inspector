@@ -5,6 +5,8 @@
             <object class="GtkPaned">
                 <property name="hexpand">true</property>
                 <property name="vexpand">true</property>
+                <property name="resize-start-child">false</property>
+                <property name="resize-end-child">true</property>
                 <property name="start_child">
                     <object class="GtkNotebook" id="tabs">
                         <child>

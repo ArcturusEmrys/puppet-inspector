@@ -1,5 +1,4 @@
 use glib;
-use glow::HasContext;
 use gtk4;
 use gtk4::CompositeTemplate;
 use gtk4::prelude::*;
@@ -8,24 +7,22 @@ use gtk4::subclass::prelude::*;
 use glib::subclass::InitializingObject;
 
 use std::cell::RefCell;
-use std::ffi::{c_void, CStr};
+use std::ffi::{CStr, c_void};
+use std::num::NonZero;
 use std::ptr::null;
 use std::sync::{Arc, Mutex};
-use std::num::NonZero;
 
-use glow;
 use gl46;
-use inox2d::node::InoxNodeUuid;
+use glow;
 use inox2d::render::InoxRendererExt;
 use inox2d_opengl::OpenglRenderer;
 
 use crate::document::Document;
-use crate::string_ext::StrExt;
 
 struct State {
     document: Arc<Mutex<Document>>,
     renderer: Option<OpenglRenderer>,
-    glfns: Option<gl46::GlFns>
+    glfns: Option<gl46::GlFns>,
 }
 
 #[derive(CompositeTemplate, Default)]
@@ -76,9 +73,9 @@ glib::wrapper! {
 unsafe fn lookup_gl_symbol(symbol: &CStr) -> *const c_void {
     #[cfg(windows)]
     {
-        match windows::Win32::Graphics::OpenGL::wglGetProcAddress(
-            windows::core::PCSTR::from_raw(symbol.as_ptr() as *const u8),
-        ) {
+        match windows::Win32::Graphics::OpenGL::wglGetProcAddress(windows::core::PCSTR::from_raw(
+            symbol.as_ptr() as *const u8,
+        )) {
             Some(fun) => fun as *const c_void,
             None => null::<c_void>(),
         }
@@ -105,7 +102,7 @@ impl InoxRenderPreview {
         *selfish.imp().state.borrow_mut() = Some(State {
             document,
             renderer: None,
-            glfns: None
+            glfns: None,
         });
         selfish.bind();
 
@@ -138,7 +135,7 @@ impl InoxRenderPreview {
             //
             // Also we have to do this AFTER context creation or WGL gets
             // grumpy.
-            // 
+            //
             // SAFETY: I have no idea what happens if you give this a bad name
             let (mut gl, native_gl) = unsafe {
                 let gl = glow::Context::from_loader_function_cstr(|p| lookup_gl_symbol(p));
@@ -160,17 +157,10 @@ impl InoxRenderPreview {
                     renderer.camera.scale.x = 0.15;
                     renderer.camera.scale.y = 0.15;
 
-                    let mut state_outer = 
-                    realize_self
-                        .imp()
-                        .state
-                        .borrow_mut();
-                    let state = state_outer
-                        .as_mut()
-                        .unwrap();
+                    let mut state_outer = realize_self.imp().state.borrow_mut();
+                    let state = state_outer.as_mut().unwrap();
                     state.glfns = Some(native_gl);
-                    state
-                        .renderer = Some(renderer)
+                    state.renderer = Some(renderer)
                 }
                 Err(e) => {
                     realize_self.display_error(&format!("Error initializing renderer: {}", e))
@@ -199,33 +189,39 @@ impl InoxRenderPreview {
             });
 
         let render_self = self.clone();
-        self.imp().gl_view.connect_render(move |gl_area, context| {
-            let mut state_outer = render_self.imp().state.borrow_mut();
-            let state = state_outer.as_mut().unwrap();
-            let mut document = state.document.lock().unwrap();
+        self.imp()
+            .gl_view
+            .connect_render(move |_gl_area, _context| {
+                let mut state_outer = render_self.imp().state.borrow_mut();
+                let state = state_outer.as_mut().unwrap();
+                let mut document = state.document.lock().unwrap();
 
-            document.model.puppet.begin_frame();
-            document.model.puppet.end_frame(1.0);
+                document.model.puppet.begin_frame();
+                document.model.puppet.end_frame(1.0);
 
-            let renderer = state.renderer.as_mut().unwrap();
-            let native_gl = state.glfns.as_ref().unwrap();
+                let renderer = state.renderer.as_mut().unwrap();
+                let native_gl = state.glfns.as_ref().unwrap();
 
-            let mut buffer_id = 0;
-            unsafe {
-                native_gl.GetIntegerv(gl46::GL_DRAW_FRAMEBUFFER_BINDING, &mut buffer_id);
-                native_gl.ClearColor(0.0, 0.0, 0.0, 255.0);
-                native_gl.Clear(gl46::GL_COLOR_BUFFER_BIT);
-            }
+                let mut buffer_id = 0;
+                unsafe {
+                    native_gl.GetIntegerv(gl46::GL_DRAW_FRAMEBUFFER_BINDING, &mut buffer_id);
+                    native_gl.ClearColor(0.0, 0.0, 0.0, 255.0);
+                    native_gl.Clear(gl46::GL_COLOR_BUFFER_BIT);
+                }
 
-            renderer.set_surface_framebuffer(NonZero::new(buffer_id as u32).map(|b| glow::NativeFramebuffer(b)));
+                renderer.set_surface_framebuffer(
+                    NonZero::new(buffer_id as u32).map(|b| glow::NativeFramebuffer(b)),
+                );
 
-            renderer.draw(&document.model.puppet).expect("successful draw");
+                renderer
+                    .draw(&document.model.puppet)
+                    .expect("successful draw");
 
-            unsafe {
-                native_gl.Flush();
-            }
+                unsafe {
+                    native_gl.Flush();
+                }
 
-            glib::Propagation::Proceed
-        });
+                glib::Propagation::Proceed
+            });
     }
 }

@@ -14,12 +14,13 @@ use std::error::Error;
 use std::sync::{Arc, Mutex};
 
 use crate::document::{Document, DocumentController};
+use crate::navigation_item::{NavigationItem, Path};
 
 /// For some reason, glib-rs does not support mutating private/impl structs.
 /// Hence the mutability hack.
 #[derive(Default)]
 pub struct WindowControllerState {
-    open_doc: Option<Arc<Mutex<Document>>>,
+    open_doc: Option<(Arc<Mutex<Document>>, DocumentController)>,
 }
 
 #[derive(CompositeTemplate, Default)]
@@ -81,26 +82,47 @@ impl WindowController {
 
         let picker = selfish.imp().filepicker.clone();
         let callback_self = selfish.clone();
-        selfish.add_action_entries([gio::ActionEntry::builder("open")
-            .activate(move |window: &WindowController, _, _| {
-                let callback_self = callback_self.clone();
+        let jump_self = selfish.clone();
+        selfish.add_action_entries([
+            gio::ActionEntry::builder("open")
+                .activate(move |window: &WindowController, _, _| {
+                    let callback_self = callback_self.clone();
 
-                picker.open(
-                    Some(window),
-                    Some(&gio::Cancellable::new()),
-                    move |file_or_error| {
-                        let maybe_error: Result<(), Box<dyn Error>> = (|| {
-                            callback_self.open_document(file_or_error?)?;
-                            Ok(())
-                        })();
+                    picker.open(
+                        Some(window),
+                        Some(&gio::Cancellable::new()),
+                        move |file_or_error| {
+                            let maybe_error: Result<(), Box<dyn Error>> = (|| {
+                                callback_self.open_document(file_or_error?)?;
+                                Ok(())
+                            })(
+                            );
 
-                        if let Err(e) = maybe_error {
-                            eprintln!("{:?}", e);
-                        }
-                    },
-                );
-            })
-            .build()]);
+                            if let Err(e) = maybe_error {
+                                eprintln!("{:?}", e);
+                            }
+                        },
+                    );
+                })
+                .build(),
+            gio::ActionEntry::builder("jump")
+                .activate(move |_window: &WindowController, _, variant| {
+                    let doc_controller = jump_self
+                        .imp()
+                        .state
+                        .borrow()
+                        .open_doc
+                        .as_ref()
+                        .unwrap()
+                        .1
+                        .clone();
+                    if let Some(path) = variant.and_then(|v| Path::from_variant(v)) {
+                        doc_controller.jump_to_path(NavigationItem::new(path));
+                    }
+                })
+                .parameter_type(Some(&Path::static_variant_type()))
+                .build(),
+        ]);
 
         selfish
     }
@@ -113,15 +135,16 @@ impl WindowController {
         let stream_adapter = crate::io_adapter::FileIn::from(stream);
 
         let document = Arc::new(Mutex::new(Document::open(stream_adapter)?));
+        let document_controller = DocumentController::new(document.clone());
 
-        self.imp().state.borrow_mut().open_doc = Some(document.clone());
+        self.imp().state.borrow_mut().open_doc = Some((document, document_controller.clone()));
 
         let contents = self.imp().contents.clone();
         while contents.first_child().is_some() {
             contents.remove(&contents.first_child().unwrap());
         }
 
-        contents.append(&DocumentController::new(document));
+        contents.append(&document_controller);
 
         Ok(())
     }

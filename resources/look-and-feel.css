@@ -13,3 +13,7 @@
 .Window-empty button label {
     margin: unset;
 }
+
+.Search-form {
+    padding: 15px 30px;
+}

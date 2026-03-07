@@ -6,6 +6,7 @@ use gtk4::prelude::*;
 mod detail_views;
 mod document;
 mod io_adapter;
+mod json;
 mod look_and_feel;
 mod navigation_item;
 mod string_ext;
