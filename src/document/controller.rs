@@ -339,81 +339,47 @@ impl DocumentController {
             _ => return,
         };
 
-        // Literally open the entire tree until we run out of shit to open.
-        // I hate that we have to do this, but GTK's fancy tree list model
-        // gives us no other choice. The entire tree has to be forcibly
-        // materialized before we can search it.
-        //
-        // (Well, I COULD work backwards from the JSON but that would be even
-        // dumber than this, and it would tie my hands more with regards to
-        // application design.)
-        let mut newly_opened_rows = vec![];
-        let mut our_row_and_precursors = vec![];
-        loop {
-            let mut did_open_a_row = false;
-            for item in tree_selection.iter::<glib::Object>() {
-                let item_row = item.unwrap().downcast::<gtk4::TreeListRow>().unwrap();
-                let item_row_item = item_row
-                    .item()
-                    .unwrap()
-                    .downcast::<NavigationItem>()
-                    .unwrap();
+        // Create a list of list rows to open.
+        // These have to be opened in reverse order (highest first), and we
+        // assume the highest option in the list is a root item.
+        let mut list_of_things_to_open = vec![path.clone()];
+        {
+            let state = self.imp().state.borrow();
+            let document_ref = state.open_doc.as_ref().unwrap();
+            let document = document_ref.lock().unwrap();
 
-                if item_row_item.as_path() == path {
-                    // Ladies and gentlemen, we got 'em.
-                    let mut parent = item_row.parent();
-
-                    our_row_and_precursors.push(item_row);
-                    while parent.is_some() {
-                        let parent_unwrap = parent.unwrap();
-                        let gp = parent_unwrap.parent();
-
-                        our_row_and_precursors.push(parent_unwrap);
-                        parent = gp;
-                    }
-                    break;
-                }
-
-                if item_row.is_expandable() && !item_row.is_expanded() {
-                    item_row.set_expanded(true);
-
-                    // We have to break here as we just invalidated our
-                    // iterator. Yes, GTK-rs reinvented iterator invalidation
-                    // in Rust. Somehow.
-                    did_open_a_row = true;
-                    newly_opened_rows.push(item_row);
+            loop {
+                if let Some(path) = list_of_things_to_open.last().unwrap().parent(&document) {
+                    list_of_things_to_open.push(path);
+                } else {
                     break;
                 }
             }
-
-            if !did_open_a_row {
-                break;
-            }
         }
 
-        // Opening the entire tree is going to be VERY disorienting to the
-        // user, so let's close everything we opened.
-        for row in newly_opened_rows {
-            if our_row_and_precursors.contains(&row) {
-                continue;
-            }
-
-            row.set_expanded(false);
-        }
-
-        // FINALLY, we can do a proper linear scan for our row in the
-        // selection model.
         let mut desired_index = None;
-        for (linear_index, object) in tree_selection.iter::<glib::Object>().enumerate() {
-            let tree_row = object.unwrap().downcast::<gtk4::TreeListRow>().unwrap();
-            let path_item = tree_row
-                .item()
-                .unwrap()
-                .downcast::<NavigationItem>()
-                .unwrap();
+        loop {
+            if let Some(path) = list_of_things_to_open.pop() {
+                for (linear_index, object) in tree_selection.iter::<glib::Object>().enumerate() {
+                    let tree_row = object.unwrap().downcast::<gtk4::TreeListRow>().unwrap();
+                    let path_item = tree_row
+                        .item()
+                        .unwrap()
+                        .downcast::<NavigationItem>()
+                        .unwrap();
 
-            if path_item.as_path() == path {
-                desired_index = Some(linear_index);
+                    if path_item.as_path() == path {
+                        if tree_row.is_expandable() && !tree_row.is_expanded() {
+                            desired_index = Some(linear_index);
+                            tree_row.set_expanded(true);
+                        }
+
+                        // Expanding the row invalidates our iterator, so we
+                        // have to loop back around and start over!
+                        break;
+                    }
+                }
+            } else {
                 break;
             }
         }

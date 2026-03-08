@@ -80,6 +80,43 @@ pub enum Path {
     RenderPreview,
 }
 
+impl Path {
+    pub fn parent(&self, document: &Document) -> Option<Path> {
+        match self {
+            Path::Section(_) => None,
+            Path::PuppetNode(node_uuid)
+                if <InoxNodeUuid as Into<inox2d::node::InoxNodeUuid>>::into(*node_uuid)
+                    != document.model.puppet.nodes().root_node_id.into() =>
+            {
+                Some(Path::PuppetNode(
+                    document
+                        .model
+                        .puppet
+                        .nodes()
+                        .get_parent((*node_uuid).into())
+                        .uuid
+                        .into(),
+                ))
+            }
+            // Root Inox node
+            Path::PuppetNode(_node_uuid) => Some(Path::Section(Section::PuppetNode)),
+            Path::PuppetParam(_) => Some(Path::Section(Section::PuppetParams)),
+            Path::PuppetJson(json_path) if json_path.len() > 0 => {
+                Some(Path::PuppetJson(json_path[0..json_path.len() - 1].to_vec()))
+            }
+            // Root Puppet JSON
+            Path::PuppetJson(_) => None,
+            Path::VendorJson(index, json_path) if json_path.len() > 0 => Some(Path::VendorJson(
+                *index,
+                json_path[0..json_path.len() - 1].to_vec(),
+            )),
+            // Root Vendor JSON
+            Path::VendorJson(_, _) => None,
+            Path::RenderPreview => None,
+        }
+    }
+}
+
 impl From<JsonPath> for Path {
     fn from(json_path: JsonPath) -> Self {
         match json_path {
