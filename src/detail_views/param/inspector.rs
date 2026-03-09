@@ -20,9 +20,21 @@ pub struct ParamInspectorImp {
     document: RefCell<Option<(Arc<Mutex<Document>>, ParamUuid)>>,
 
     #[template_child]
-    name_field: TemplateChild<gtk4::TextView>,
+    name_field: TemplateChild<gtk4::Entry>,
     #[template_child]
     uuid_label: TemplateChild<gtk4::Label>,
+    #[template_child]
+    min_x_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
+    min_y_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
+    max_x_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
+    max_y_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
+    default_x_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
+    default_y_field: TemplateChild<gtk4::Entry>,
     #[template_child]
     is_vec2_check: TemplateChild<gtk4::CheckButton>,
 }
@@ -85,6 +97,30 @@ impl ParamInspector {
         self.imp()
             .uuid_label
             .set_label(&format!("{}", param.uuid.0));
+        self.imp()
+            .min_x_field
+            .buffer()
+            .set_text(&format!("{}", param.min.x));
+        self.imp()
+            .min_y_field
+            .buffer()
+            .set_text(&format!("{}", param.min.y));
+        self.imp()
+            .max_x_field
+            .buffer()
+            .set_text(&format!("{}", param.max.x));
+        self.imp()
+            .max_y_field
+            .buffer()
+            .set_text(&format!("{}", param.max.y));
+        self.imp()
+            .default_x_field
+            .buffer()
+            .set_text(&format!("{}", param.defaults.x));
+        self.imp()
+            .default_y_field
+            .buffer()
+            .set_text(&format!("{}", param.defaults.y));
         self.imp().is_vec2_check.set_active(param.is_vec2);
     }
 }

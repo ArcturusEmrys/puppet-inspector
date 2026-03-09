@@ -14,9 +14,10 @@
             </object>
         </child>
         <child>
-            <object class="GtkTextView" id="name_field">
+            <object class="GtkEntry" id="name_field">
                 <property name="hexpand">true</property>
                 <layout>
+                    <property name="column-span">2</property>
                     <property name="column">1</property>
                     <property name="row">0</property>
                 </layout>
@@ -37,6 +38,7 @@
                 <property name="hexpand">true</property>
                 <property name="xalign">0.0</property>
                 <layout>
+                    <property name="column-span">2</property>
                     <property name="column">1</property>
                     <property name="row">1</property>
                 </layout>
@@ -47,6 +49,7 @@
                 <property name="hexpand">true</property>
                 <property name="label">Is 2-dimensional</property>
                 <layout>
+                    <property name="column-span">2</property>
                     <property name="column">1</property>
                     <property name="row">2</property>
                 </layout>
@@ -63,10 +66,17 @@
             </object>
         </child>
         <child>
-            <object class="GtkBox">
-                <!-- Todo: vec2 editor -->
+            <object class="GtkEntry" id="min_x_field">
                 <layout>
                     <property name="column">1</property>
+                    <property name="row">3</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkEntry" id="min_y_field">
+                <layout>
+                    <property name="column">2</property>
                     <property name="row">3</property>
                 </layout>
             </object>
@@ -82,10 +92,17 @@
             </object>
         </child>
         <child>
-            <object class="GtkBox">
-                <!-- Todo: vec2 editor -->
+            <object class="GtkEntry" id="max_x_field">
                 <layout>
                     <property name="column">1</property>
+                    <property name="row">4</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkEntry" id="max_y_field">
+                <layout>
+                    <property name="column">2</property>
                     <property name="row">4</property>
                 </layout>
             </object>
@@ -101,15 +118,21 @@
             </object>
         </child>
         <child>
-            <object class="GtkBox">
-                <!-- Todo: vec2 editor -->
+            <object class="GtkEntry" id="default_x_field">
                 <layout>
                     <property name="column">1</property>
                     <property name="row">5</property>
                 </layout>
             </object>
         </child>
-
+        <child>
+            <object class="GtkEntry" id="default_y_field">
+                <layout>
+                    <property name="column">2</property>
+                    <property name="row">5</property>
+                </layout>
+            </object>
+        </child>
         <child>
             <object class="GtkLabel">
                 <property name="label">Axis points</property>
