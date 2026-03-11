@@ -96,13 +96,7 @@ impl ParamInspector {
     fn bind(&self) {
         let (document_arc, param_uuid) = self.imp().document.borrow().as_ref().unwrap().clone();
 
-        self.imp().bound_node_factory.connect_setup(|_, object| {
-            let list_item = object.downcast_ref::<gtk4::ListItem>().unwrap();
-            //TODO: Add a Jump To button for the node
-            list_item.set_child(Some(
-                &gtk4::Label::builder().halign(gtk4::Align::Start).build(),
-            ));
-        });
+        self.imp().bound_node_factory.connect_setup(|_, object| {});
 
         let node_document = document_arc.clone();
         self.imp()
@@ -112,6 +106,15 @@ impl ParamInspector {
                 let nav_item = list_item.item().unwrap();
                 let nav = nav_item.downcast_ref::<NavigationItem>().unwrap();
                 let (param_id, bind_id) = nav.as_puppet_param_binding().unwrap();
+
+                let label = gtk4::Label::builder().halign(gtk4::Align::Start).build();
+
+                let gtkbox = gtk4::Box::builder()
+                    .orientation(gtk4::Orientation::Horizontal)
+                    .hexpand(true)
+                    .build();
+
+                gtkbox.append(&label);
 
                 let document = node_document.lock().unwrap();
                 let param = document
@@ -124,11 +127,19 @@ impl ParamInspector {
                 let node = binding.and_then(|b| document.model.puppet.nodes().get_node(b.node));
 
                 if let Some(node) = node {
-                    let label_child = list_item.child().unwrap();
-                    let label = label_child.downcast_ref::<gtk4::Label>().unwrap();
-
                     label.set_text(&node.name.escape_nulls());
+
+                    let button = gtk4::Button::builder()
+                        .halign(gtk4::Align::End)
+                        .icon_name("go-jump")
+                        .action_name("win.jump")
+                        .action_target(&Path::PuppetNode(node.uuid.into()).to_variant())
+                        .build();
+
+                    gtkbox.append(&button);
                 }
+
+                list_item.set_child(Some(&gtkbox));
             });
 
         self.imp()
