@@ -5,13 +5,13 @@
         <file compressed="true">windows-look-and-feel.css</file>
         <file compressed="true" preprocess="xml-stripblanks">window.ui</file>
         <file compressed="true" preprocess="xml-stripblanks">document.ui</file>
-        <file compressed="true" preprocess="xml-stripblanks">metadata_inspector.ui</file>
-        <file compressed="true" preprocess="xml-stripblanks">physics_inspector.ui</file>
-        <file compressed="true" preprocess="xml-stripblanks">node_search.ui</file>
-        <file compressed="true" preprocess="xml-stripblanks">node_inspector.ui</file>
-        <file compressed="true" preprocess="xml-stripblanks">param_search.ui</file>
-        <file compressed="true" preprocess="xml-stripblanks">param_inspector.ui</file>
-        <file compressed="true" preprocess="xml-stripblanks">json_inspector.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">detail_views/metadata/inspector.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">detail_views/physics/inspector.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">detail_views/node/search.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">detail_views/node/inspector.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">detail_views/param/search.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">detail_views/param/inspector.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">detail_views/json/inspector.ui</file>
         <file compressed="true" preprocess="xml-stripblanks">inox_render_preview.ui</file>
         <file compressed="true" preprocess="xml-stripblanks">detail_views/texture/browser.ui</file>
     </gresource>

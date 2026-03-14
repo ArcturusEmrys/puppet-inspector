@@ -18,7 +18,7 @@ use crate::navigation::NavigationItem;
 use crate::string_ext::StrExt;
 
 #[derive(CompositeTemplate, Default)]
-#[template(resource = "/live/arcturus/puppet-inspector/node_search.ui")]
+#[template(resource = "/live/arcturus/puppet-inspector/detail_views/node/search.ui")]
 pub struct NodeSearchImp {
     state: RefCell<Option<(Arc<Mutex<Document>>, gio::ListStore)>>,
 

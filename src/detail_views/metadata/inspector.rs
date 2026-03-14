@@ -13,7 +13,7 @@ use crate::document::Document;
 use crate::string_ext::StrExt;
 
 #[derive(CompositeTemplate, Default)]
-#[template(resource = "/live/arcturus/puppet-inspector/metadata_inspector.ui")]
+#[template(resource = "/live/arcturus/puppet-inspector/detail_views/metadata/inspector.ui")]
 pub struct MetadataInspectorImp {
     document: RefCell<Option<Arc<Mutex<Document>>>>,
 

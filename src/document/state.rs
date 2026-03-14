@@ -1,5 +1,5 @@
 use inox2d::formats::inp::parse_inp_parts;
-use inox2d::model::{Model, ModelTexture, VendorData};
+use inox2d::model::{Model, VendorData};
 use inox2d::puppet::Puppet;
 use inox2d::texture::{ShallowTexture, decode_model_textures};
 use json::JsonValue;

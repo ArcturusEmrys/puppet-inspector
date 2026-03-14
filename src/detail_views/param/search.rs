@@ -14,7 +14,7 @@ use crate::navigation::NavigationItem;
 use crate::string_ext::StrExt;
 
 #[derive(CompositeTemplate, Default)]
-#[template(resource = "/live/arcturus/puppet-inspector/param_search.ui")]
+#[template(resource = "/live/arcturus/puppet-inspector/detail_views/param/search.ui")]
 pub struct ParamSearchImp {
     state: RefCell<Option<(Arc<Mutex<Document>>, gio::ListStore)>>,
 

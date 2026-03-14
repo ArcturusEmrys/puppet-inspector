@@ -15,7 +15,7 @@ use crate::document::Document;
 use crate::string_ext::StrExt;
 
 #[derive(CompositeTemplate, Default)]
-#[template(resource = "/live/arcturus/puppet-inspector/node_inspector.ui")]
+#[template(resource = "/live/arcturus/puppet-inspector/detail_views/node/inspector.ui")]
 pub struct NodeInspectorImp {
     document: RefCell<Option<(Arc<Mutex<Document>>, InoxNodeUuid)>>,
 

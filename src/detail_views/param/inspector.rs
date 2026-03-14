@@ -18,7 +18,7 @@ use crate::navigation::{NavigationItem, Path};
 use crate::string_ext::StrExt;
 
 #[derive(CompositeTemplate, Default)]
-#[template(resource = "/live/arcturus/puppet-inspector/param_inspector.ui")]
+#[template(resource = "/live/arcturus/puppet-inspector/detail_views/param/inspector.ui")]
 pub struct ParamInspectorImp {
     document: RefCell<Option<(Arc<Mutex<Document>>, ParamUuid)>>,
 
