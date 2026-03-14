@@ -1,6 +1,7 @@
 use inox2d::formats::inp::parse_inp_parts;
 use inox2d::model::{Model, ModelTexture, VendorData};
 use inox2d::puppet::Puppet;
+use inox2d::texture::{ShallowTexture, decode_model_textures};
 use json::JsonValue;
 use std::error::Error;
 use std::io::Read;
@@ -9,6 +10,7 @@ pub struct Document {
     pub(crate) puppet_json: JsonValue,
     pub(crate) model: Model,
     is_render_initialized: bool,
+    textures: Vec<ShallowTexture>,
 }
 
 impl Document {
@@ -25,6 +27,7 @@ impl Document {
             puppet_json,
             model,
             is_render_initialized: false,
+            textures: vec![],
         })
     }
 
@@ -32,8 +35,12 @@ impl Document {
         &self.model.puppet
     }
 
-    pub fn textures(&self) -> &[ModelTexture] {
-        self.model.textures.as_slice()
+    pub fn textures(&mut self) -> &[ShallowTexture] {
+        if self.textures.len() == 0 {
+            self.textures = decode_model_textures(self.model.textures.iter());
+        }
+
+        self.textures.as_slice()
     }
 
     pub fn vendors(&self) -> &[VendorData] {

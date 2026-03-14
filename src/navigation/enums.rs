@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::detail_views::{
     InoxRenderPreview, JsonInspector, MetadataInspector, NodeInspector, NodeSearch, ParamInspector,
-    ParamSearch, PhysicsInspector,
+    ParamSearch, PhysicsInspector, TextureBrowser,
 };
 use crate::document::Document;
 use crate::json::JsonValueExt;
@@ -131,6 +131,11 @@ impl From<inox2d::params::ParamUuid> for ParamUuid {
 /// 2. Where will that page live?
 /// 3. What will be its parents and children?
 ///
+/// Some detail pages are not intended to actually be viewed. For example, you
+/// might need to populate a GTK list model with references to specific parts
+/// of the document, but not care about actually navigating to them. That use
+/// case is also specifically supported.
+///
 /// This struct has a GObject wrapper `NavigationItem` and may also be
 /// serialized into a GVariant.
 #[derive(Clone, Debug, glib::Variant, PartialEq, Eq)]
@@ -139,6 +144,7 @@ pub enum Path {
     PuppetNode(InoxNodeUuid),
     PuppetParam(ParamUuid),
     PuppetParamBinding(ParamUuid, u64),
+    ModelTexture(u64),
     PuppetJson(Vec<JsonIndex>),
     VendorJson(u64, Vec<JsonIndex>),
     RenderPreview,
@@ -209,6 +215,7 @@ impl Path {
 
                 "<MISSING OR INVALID BINDING>".into()
             }
+            Path::ModelTexture(tex) => format!("Model texture {}", tex).into(),
             Path::PuppetJson(path) => {
                 if let Some(first) = path.last() {
                     match first {
@@ -238,12 +245,16 @@ impl Path {
     }
 
     /// What notebook page of the app does this navigation item live in?
+    ///
+    /// This should be self-consistent with the path's `parent`, if one is
+    /// available.
     pub fn notebook_page(&self) -> u32 {
         match self {
             Path::Section(_)
             | Path::PuppetNode(_)
             | Path::PuppetParam(_)
-            | Path::PuppetParamBinding(_, _) => 0,
+            | Path::PuppetParamBinding(_, _)
+            | Path::ModelTexture(_) => 0,
             Path::PuppetJson(_) | Path::VendorJson(_, _) => 1,
             Path::RenderPreview => 2,
         }
@@ -271,6 +282,7 @@ impl Path {
             Path::PuppetNode(_node_uuid) => Some(Path::Section(Section::PuppetNode)),
             Path::PuppetParam(_) => Some(Path::Section(Section::PuppetParams)),
             Path::PuppetParamBinding(param, _) => Some(Path::PuppetParam(*param)),
+            Path::ModelTexture(_) => Some(Path::Section(Section::ModelTextures)),
             Path::PuppetJson(json_path) if json_path.len() > 0 => {
                 Some(Path::PuppetJson(json_path[0..json_path.len() - 1].to_vec()))
             }
@@ -377,6 +389,7 @@ impl Path {
                     .with_list_index(*bind_index),
             ),
             Path::RenderPreview => Some(JsonPath::PuppetJson(vec![])),
+            Path::ModelTexture(_) => None,
         }
     }
 
@@ -483,6 +496,7 @@ impl Path {
             Path::Section(Section::PuppetPhysics) => PhysicsInspector::new(document).into(),
             Path::Section(Section::PuppetNode) => NodeSearch::new(document).into(),
             Path::Section(Section::PuppetParams) => ParamSearch::new(document).into(),
+            Path::Section(Section::ModelTextures) => TextureBrowser::new(document).into(),
             Path::PuppetNode(node) => NodeInspector::new(document, (*node).into()).into(),
             Path::PuppetParam(param) => ParamInspector::new(document, param.clone().into()).into(),
             Path::PuppetJson(path) => JsonInspector::new_puppet_json(document, path.clone()).into(),
