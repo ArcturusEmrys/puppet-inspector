@@ -13,9 +13,8 @@ use std::sync::{Arc, Mutex};
 use inox2d::params::ParamUuid;
 
 use crate::document::Document;
-use crate::json::JsonValueExt;
+use crate::ext::{JsonValueExt, StrExt};
 use crate::navigation::{NavigationItem, Path};
-use crate::string_ext::StrExt;
 
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/live/arcturus/puppet-inspector/detail_views/param/inspector.ui")]

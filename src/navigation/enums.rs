@@ -9,7 +9,7 @@ use crate::detail_views::{
     PhysicsInspector, TextureBrowser,
 };
 use crate::document::Document;
-use crate::json::JsonValueExt;
+use crate::ext::JsonValueExt;
 
 /// An instruction on how to traverse a JSON object.
 #[derive(Debug, Clone, PartialEq, Eq, glib::Variant)]

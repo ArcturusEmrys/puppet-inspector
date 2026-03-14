@@ -5,13 +5,10 @@ use gtk4::prelude::*;
 
 mod detail_views;
 mod document;
-mod gtk_ext;
-mod io_adapter;
-mod json;
+mod ext;
 mod look_and_feel;
 mod navigation;
 mod render_preview;
-mod string_ext;
 mod window;
 
 use crate::window::WindowController;

@@ -12,7 +12,7 @@ use std::sync::{Arc, Mutex};
 use inox2d::node::InoxNodeUuid;
 
 use crate::document::Document;
-use crate::string_ext::StrExt;
+use crate::ext::StrExt;
 
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/live/arcturus/puppet-inspector/detail_views/node/inspector.ui")]

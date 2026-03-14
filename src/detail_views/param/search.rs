@@ -10,8 +10,8 @@ use std::cell::RefCell;
 use std::sync::{Arc, Mutex};
 
 use crate::document::Document;
+use crate::ext::StrExt;
 use crate::navigation::NavigationItem;
-use crate::string_ext::StrExt;
 
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/live/arcturus/puppet-inspector/detail_views/param/search.ui")]

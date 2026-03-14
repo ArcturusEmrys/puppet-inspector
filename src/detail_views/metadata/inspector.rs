@@ -10,7 +10,7 @@ use std::cell::RefCell;
 use std::sync::{Arc, Mutex};
 
 use crate::document::Document;
-use crate::string_ext::StrExt;
+use crate::ext::StrExt;
 
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/live/arcturus/puppet-inspector/detail_views/metadata/inspector.ui")]

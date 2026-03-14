@@ -12,10 +12,8 @@ use std::sync::{Arc, Mutex};
 use inox2d::node::InoxNodeUuid;
 
 use crate::document::Document;
-use crate::gtk_ext::WidgetExt2;
-use crate::json::JsonValueExt;
+use crate::ext::{JsonValueExt, StrExt, WidgetExt2};
 use crate::navigation::NavigationItem;
-use crate::string_ext::StrExt;
 
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/live/arcturus/puppet-inspector/detail_views/node/search.ui")]
