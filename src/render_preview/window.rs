@@ -126,6 +126,8 @@ impl InoxRenderPreview {
         // the first render on the GLArea.
         let realize_self = self.clone();
 
+        self.imp().gl_view.set_has_stencil_buffer(true);
+
         self.imp().gl_view.connect_realize(move |gl_area| {
             let annoying_self_borrow = realize_self.imp().state.borrow();
             let mut document = annoying_self_borrow
