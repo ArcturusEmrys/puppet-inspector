@@ -205,39 +205,46 @@ impl InoxRenderPreview {
             });
 
         let render_self = self.clone();
-        self.imp()
-            .gl_view
-            .connect_render(move |_gl_area, _context| {
-                let mut state_outer = render_self.imp().state.borrow_mut();
-                let state = state_outer.as_mut().unwrap();
-                let mut document = state.document.lock().unwrap();
+        self.imp().gl_view.connect_render(move |gl_area, _context| {
+            if let Some(e) = gl_area.error() {
+                render_self.display_error(e.message());
+            }
 
-                document.model.puppet.begin_frame();
-                document.model.puppet.end_frame(1.0);
+            let mut state_outer = render_self.imp().state.borrow_mut();
+            let state = state_outer.as_mut().unwrap();
+            let mut document = state.document.lock().unwrap();
 
-                let renderer = state.renderer.as_mut().unwrap();
-                let native_gl = state.glfns.as_ref().unwrap();
+            document.model.puppet.begin_frame();
+            document.model.puppet.end_frame(1.0);
 
-                let mut buffer_id = 0;
-                unsafe {
-                    native_gl.GetIntegerv(gl46::GL_DRAW_FRAMEBUFFER_BINDING, &mut buffer_id);
-                    native_gl.ClearColor(0.0, 0.0, 0.0, 255.0);
-                    native_gl.Clear(gl46::GL_COLOR_BUFFER_BIT);
-                }
+            let renderer = state.renderer.as_mut().unwrap();
+            let native_gl = state.glfns.as_ref().unwrap();
 
-                renderer.set_surface_framebuffer(
-                    NonZero::new(buffer_id as u32).map(|b| glow::NativeFramebuffer(b)),
-                );
+            let mut buffer_id = 0;
+            unsafe {
+                native_gl.GetIntegerv(gl46::GL_DRAW_FRAMEBUFFER_BINDING, &mut buffer_id);
+                native_gl.ClearColor(0.0, 0.0, 0.0, 1.0);
+                native_gl.Clear(gl46::GL_COLOR_BUFFER_BIT);
+            }
 
-                renderer
-                    .draw(&document.model.puppet)
-                    .expect("successful draw");
+            renderer.set_surface_framebuffer(
+                NonZero::new(buffer_id as u32).map(|b| glow::NativeFramebuffer(b)),
+            );
 
-                unsafe {
-                    native_gl.Flush();
-                }
+            renderer
+                .draw(&document.model.puppet)
+                .expect("successful draw");
 
-                glib::Propagation::Proceed
-            });
+            unsafe {
+                native_gl.BindFramebuffer(gl46::GL_FRAMEBUFFER, buffer_id as u32);
+                native_gl.Flush();
+            }
+
+            if let Some(e) = gl_area.error() {
+                render_self.display_error(e.message());
+            }
+
+            glib::Propagation::Proceed
+        });
     }
 }
