@@ -1,6 +1,11 @@
 use json::{JsonValue, object::Object as JsonObject};
 
-use crate::navigation::JsonIndex;
+/// An instruction on how to traverse a JSON object.
+#[derive(Debug, Clone, PartialEq, Eq, glib::Variant)]
+pub enum JsonIndex {
+    ObjectKey(String),
+    ListIndex(u64),
+}
 
 pub trait JsonValueExt {
     fn as_object(&self) -> Option<&JsonObject>;

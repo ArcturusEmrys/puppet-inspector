@@ -12,8 +12,8 @@ use std::sync::{Arc, Mutex};
 use inox2d::node::InoxNodeUuid;
 
 use crate::document::Document;
-use crate::ext::{JsonValueExt, StrExt, WidgetExt2};
 use crate::navigation::NavigationItem;
+use ningyo_extensions::prelude::*;
 
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/live/arcturus/puppet-inspector/detail_views/node/search.ui")]

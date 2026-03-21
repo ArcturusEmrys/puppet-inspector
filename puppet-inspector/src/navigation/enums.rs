@@ -9,14 +9,7 @@ use crate::detail_views::{
     PhysicsInspector, TextureBrowser,
 };
 use crate::document::Document;
-use crate::ext::JsonValueExt;
-
-/// An instruction on how to traverse a JSON object.
-#[derive(Debug, Clone, PartialEq, Eq, glib::Variant)]
-pub enum JsonIndex {
-    ObjectKey(String),
-    ListIndex(u64),
-}
+use ningyo_extensions::prelude::*;
 
 /// A reference to a specific JSON object within an Inochi puppet file.
 #[derive(Debug, Clone, PartialEq, Eq, glib::Variant)]

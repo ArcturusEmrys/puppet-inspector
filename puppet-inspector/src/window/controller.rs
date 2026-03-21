@@ -110,7 +110,7 @@ impl WindowController {
         // TODO: async loading
 
         let stream = file.read(Some(&gio::Cancellable::new()))?;
-        let stream_adapter = crate::ext::FileIn::from(stream);
+        let stream_adapter = ningyo_extensions::FileIn::from(stream);
 
         let document = Arc::new(Mutex::new(Document::open(stream_adapter)?));
         let document_controller = DocumentController::new(document.clone());

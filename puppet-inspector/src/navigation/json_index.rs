@@ -3,7 +3,7 @@ use glib::subclass::prelude::*;
 
 use std::cell::RefCell;
 
-use crate::navigation::JsonIndex;
+use ningyo_extensions::JsonIndex;
 
 #[derive(Default)]
 pub struct JsonIndexItemImp(RefCell<Option<JsonIndex>>);

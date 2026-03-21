@@ -12,6 +12,7 @@ json = "0.12.4"
 glow = "0.14.1"
 gl46 = "0.2.1"
 ningyo-look-and-feel = { path = "../ningyo-look-and-feel" }
+ningyo-extensions = { path = "../ningyo-extensions" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 egl = "0.2.7"

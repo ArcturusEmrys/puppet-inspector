@@ -5,7 +5,6 @@ use gtk4::prelude::*;
 
 mod detail_views;
 mod document;
-mod ext;
 mod navigation;
 mod render_preview;
 mod window;

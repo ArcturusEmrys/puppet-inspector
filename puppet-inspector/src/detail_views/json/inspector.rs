@@ -13,8 +13,8 @@ use std::sync::{Arc, Mutex};
 use json::JsonValue;
 
 use crate::document::Document;
-use crate::ext::{JsonValueExt, StrExt};
-use crate::navigation::{JsonIndex, JsonIndexItem, JsonPath};
+use crate::navigation::{JsonIndexItem, JsonPath};
+use ningyo_extensions::prelude::*;
 
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/live/arcturus/puppet-inspector/detail_views/json/inspector.ui")]

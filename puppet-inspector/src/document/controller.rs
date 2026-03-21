@@ -13,9 +13,9 @@ use std::cell::RefCell;
 use std::sync::{Arc, Mutex};
 
 use crate::document::Document;
-use crate::ext::{StrExt, WidgetExt2};
 use crate::navigation::{NavigationItem, Path, Section};
 use crate::render_preview::InoxRenderPreview;
+use ningyo_extensions::prelude::*;
 
 /// For some reason, glib-rs does not support mutating private/impl structs.
 /// Hence the mutability hack.
