@@ -1,11 +1,28 @@
 use gio::prelude::*;
 use gtk4::prelude::*;
 
+mod document;
 mod io;
+mod stage;
 mod window;
+
+#[derive(Default)]
+pub struct CookieManager {
+    next: u32,
+}
+
+impl CookieManager {
+    fn next(&mut self) -> u32 {
+        let out = self.next;
+        self.next += 1;
+
+        out
+    }
+}
 
 fn main() -> glib::ExitCode {
     let (io_send, io_recv) = io::start();
+    let mut cookie_manager = CookieManager::default();
 
     //io_send.send_blocking(io::IoMessage::ConnectVTSTracker())
 
@@ -24,5 +41,11 @@ fn main() -> glib::ExitCode {
         window.present();
     });
 
-    app.run()
+    let ret = app.run();
+
+    io_send
+        .send_blocking(io::IoMessage::Exit(cookie_manager.next()))
+        .unwrap();
+
+    ret
 }
