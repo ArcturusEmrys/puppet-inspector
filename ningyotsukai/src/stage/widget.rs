@@ -27,7 +27,7 @@ pub struct StageWidgetState {
     middle_mouse_button_down: bool,
 
     /// The starting zoom factor at the start of GestureZoom's begin signal
-    starting_zoom_amount: f64
+    starting_zoom_amount: f64,
 }
 
 #[derive(glib::Properties)]
@@ -109,14 +109,20 @@ impl ObjectImpl for StageWidgetImp {
         });
 
         let drag_drag_self = self.obj().clone();
-        drag.connect_drag_update(move |_, offset_x, offset_y| {
+        drag.connect_drag_update(move |_, mut offset_x, mut offset_y| {
             let state = drag_drag_self.imp().state.borrow();
 
-            if let (Some(starting_drag_position), Some(h_adjust), Some(v_adjust)) = (
+            if let (Some(starting_drag_position), Some(h_adjust), Some(v_adjust), Some(z_adjust)) = (
                 state.starting_drag_position,
                 &*drag_drag_self.imp().hadjustment.borrow(),
                 &*drag_drag_self.imp().vadjustment.borrow(),
+                &*drag_drag_self.imp().zadjustment.borrow(),
             ) {
+                // When we zoom out, or in, our drag speed changes, so adjust for that.
+                let zoom = 10.0_f64.powf(z_adjust.value());
+                offset_x /= zoom;
+                offset_y /= zoom;
+
                 h_adjust.set_value(starting_drag_position[0] as f64 - offset_x);
                 v_adjust.set_value(starting_drag_position[1] as f64 - offset_y);
             }
@@ -177,7 +183,11 @@ impl ObjectImpl for StageWidgetImp {
         let zoom_begin_self = self.obj().clone();
         zoom.connect_begin(move |_, _| {
             if let Some(ref zadjust) = *zoom_begin_self.imp().zadjustment.borrow() {
-                zoom_begin_self.imp().state.borrow_mut().starting_zoom_amount = zadjust.value();
+                zoom_begin_self
+                    .imp()
+                    .state
+                    .borrow_mut()
+                    .starting_zoom_amount = zadjust.value();
             }
         });
 
@@ -186,7 +196,7 @@ impl ObjectImpl for StageWidgetImp {
             //TODO: I have yet to actually test this code on a real trackpad or touchscreen yet
             if let Some(ref zadjust) = *zoom_scale_changed_self.imp().zadjustment.borrow() {
                 let state = zoom_scale_changed_self.imp().state.borrow_mut();
-                
+
                 //I'm assuming GTK provides linear zoom values as multiples (not percentages)
                 zadjust.set_value(state.starting_zoom_amount + delta.log(10.0));
             }
