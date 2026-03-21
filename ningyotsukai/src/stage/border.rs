@@ -18,7 +18,7 @@ impl ObjectSubclass for StageBorderGizmoImp {
         class.set_css_name("ningyo-stageborder");
     }
 
-    fn instance_init(obj: &InitializingObject<Self>) {}
+    fn instance_init(_obj: &InitializingObject<Self>) {}
 }
 
 impl ObjectImpl for StageBorderGizmoImp {

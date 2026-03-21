@@ -1,4 +1,4 @@
-use crate::stage::{Coord, Stage};
+use crate::stage::Stage;
 
 /// A Ningyotsukai document.
 pub struct Document {

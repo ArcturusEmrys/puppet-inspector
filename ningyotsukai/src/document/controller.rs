@@ -1,4 +1,3 @@
-use gio;
 use glib;
 use gtk4;
 

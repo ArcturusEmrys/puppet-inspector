@@ -25,6 +25,9 @@ pub struct StageWidgetState {
 
     /// Whether or not the middle mouse button is down.
     middle_mouse_button_down: bool,
+
+    /// The starting zoom factor at the start of GestureZoom's begin signal
+    starting_zoom_amount: f64
 }
 
 #[derive(glib::Properties)]
@@ -75,7 +78,7 @@ impl ObjectSubclass for StageWidgetImp {
         class.set_css_name("ningyo-stage");
     }
 
-    fn instance_init(obj: &InitializingObject<Self>) {}
+    fn instance_init(_obj: &InitializingObject<Self>) {}
 }
 
 #[glib::derived_properties]
@@ -168,6 +171,28 @@ impl ObjectImpl for StageWidgetImp {
         });
 
         self.obj().add_controller(scroll_wheel);
+
+        let zoom = gtk4::GestureZoom::new();
+
+        let zoom_begin_self = self.obj().clone();
+        zoom.connect_begin(move |_, _| {
+            if let Some(ref zadjust) = *zoom_begin_self.imp().zadjustment.borrow() {
+                zoom_begin_self.imp().state.borrow_mut().starting_zoom_amount = zadjust.value();
+            }
+        });
+
+        let zoom_scale_changed_self = self.obj().clone();
+        zoom.connect_scale_changed(move |_, delta| {
+            //TODO: I have yet to actually test this code on a real trackpad or touchscreen yet
+            if let Some(ref zadjust) = *zoom_scale_changed_self.imp().zadjustment.borrow() {
+                let state = zoom_scale_changed_self.imp().state.borrow_mut();
+                
+                //I'm assuming GTK provides linear zoom values as multiples (not percentages)
+                zadjust.set_value(state.starting_zoom_amount + delta.log(10.0));
+            }
+        });
+
+        self.obj().add_controller(zoom);
     }
 
     fn dispose(&self) {
