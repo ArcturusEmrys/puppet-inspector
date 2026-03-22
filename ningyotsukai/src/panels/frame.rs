@@ -19,7 +19,7 @@ pub struct PanelFrameImp {
     contents: TemplateChild<gtk4::Frame>,
 
     #[property(get, set)]
-    name: RefCell<String>
+    name: RefCell<String>,
 }
 
 #[glib::object_subclass]
@@ -27,6 +27,7 @@ impl ObjectSubclass for PanelFrameImp {
     const NAME: &'static str = "NGTPanelFrame";
     type Type = PanelFrame;
     type ParentType = gtk4::Box;
+    type Interfaces = (gtk4::Buildable,);
 
     fn class_init(class: &mut Self::Class) {
         class.bind_template();
@@ -58,7 +59,9 @@ impl ObjectImpl for PanelFrameImp {
 
         self.handle.add_controller(drag_source);
 
-        self.obj().bind_property("name", &*self.handle, "label").build();
+        self.obj()
+            .bind_property("name", &*self.handle, "label")
+            .build();
     }
 }
 
@@ -69,7 +72,10 @@ impl BoxImpl for PanelFrameImp {}
 impl BuildableImpl for PanelFrameImp {
     fn add_child(&self, builder: &gtk4::Builder, object: &glib::Object, name: Option<&str>) {
         if let Some(widget) = object.downcast_ref::<gtk4::Widget>() {
-            self.contents.set_child(Some(widget))
+            match name {
+                Some("NGTPanelFrame-internal") => self.parent_add_child(builder, object, name),
+                _ => self.contents.set_child(Some(widget)),
+            }
         } else {
             self.parent_add_child(builder, object, name)
         }

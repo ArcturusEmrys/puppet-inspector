@@ -2,13 +2,13 @@
 <interface>
     <template class="NGTPanelFrame" parent="GtkBox">
         <property name="orientation">vertical</property>
-        <child>
+        <child type="NGTPanelFrame-internal">
             <object class="GtkLabel" id="handle">
                 <property name="label">My frame</property>
                 <property name="halign">start</property>
             </object>
         </child>
-        <child>
+        <child type="NGTPanelFrame-internal">
             <object class="GtkFrame" id="contents">
             </object>
         </child>
