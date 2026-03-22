@@ -6,14 +6,20 @@ use gtk4::CompositeTemplate;
 use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
 
-#[derive(CompositeTemplate, Default)]
+use std::cell::RefCell;
+
+#[derive(CompositeTemplate, Default, glib::Properties)]
 #[template(resource = "/live/arcturus/ningyotsukai/panels/frame.ui")]
+#[properties(wrapper_type=PanelFrame)]
 pub struct PanelFrameImp {
     #[template_child]
     handle: TemplateChild<gtk4::Label>,
 
     #[template_child]
     contents: TemplateChild<gtk4::Frame>,
+
+    #[property(get, set)]
+    name: RefCell<String>
 }
 
 #[glib::object_subclass]
@@ -51,6 +57,8 @@ impl ObjectImpl for PanelFrameImp {
         });
 
         self.handle.add_controller(drag_source);
+
+        self.obj().bind_property("name", &*self.handle, "label").build();
     }
 }
 
