@@ -2,6 +2,7 @@
 name = "ningyotsukai"
 version = "0.1.0"
 edition = "2024"
+license = "GPL-3.0-or-later"
 description = "A virtual puppetry performance recording tool."
 authors = ["Arcturus Emrys <aemrys@arcturus.live>"]
 
