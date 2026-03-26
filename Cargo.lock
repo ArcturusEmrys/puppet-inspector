@@ -919,6 +919,7 @@ dependencies = [
  "glib-build-tools",
  "glow",
  "graphene-rs",
+ "gsk4",
  "gtk4",
  "inox2d",
  "inox2d-opengl",

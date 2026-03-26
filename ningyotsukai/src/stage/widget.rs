@@ -10,8 +10,8 @@ use std::cell::{Cell, RefCell};
 use std::sync::{Arc, Mutex};
 
 use crate::document::Document;
-use crate::stage::gestures::{DragGesture, ZoomGesture};
-use crate::stage::gizmos::StageBorderGizmo;
+use crate::stage::gestures::{DragGesture, SelectGesture, ZoomGesture};
+use crate::stage::gizmos::{StageBorderGizmo, StageSelectionGizmo};
 use crate::stage::renderer::StageRenderer;
 
 #[derive(Default)]
@@ -21,6 +21,9 @@ pub struct StageWidgetState {
     /// Internal accounting widget for the border around the stage.
     border_gizmo: Option<StageBorderGizmo>,
 
+    /// A gizmo to represent the selection box.
+    selection_gizmo: Option<StageSelectionGizmo>,
+
     /// Rendering area for Inox2D.
     render_area: Option<StageRenderer>,
 
@@ -29,6 +32,9 @@ pub struct StageWidgetState {
 
     /// Our drag gesture.
     zoom_gesture: Option<ZoomGesture>,
+
+    /// And our select gesture.
+    select_gesture: Option<SelectGesture>,
 }
 
 #[derive(glib::Properties)]
@@ -92,6 +98,11 @@ impl ObjectImpl for StageWidgetImp {
         border_gizmo.set_parent(&*self.obj());
         self.state.borrow_mut().border_gizmo = Some(border_gizmo);
 
+        let selection_gizmo = StageSelectionGizmo::new();
+
+        selection_gizmo.set_parent(&*self.obj());
+        self.state.borrow_mut().selection_gizmo = Some(selection_gizmo.clone());
+
         let gl_area = StageRenderer::new();
 
         self.obj()
@@ -113,6 +124,8 @@ impl ObjectImpl for StageWidgetImp {
             Some(DragGesture::for_widget(&self.obj().clone().upcast()));
         self.state.borrow_mut().zoom_gesture =
             Some(ZoomGesture::for_widget(&self.obj().clone().upcast()));
+        self.state.borrow_mut().select_gesture =
+            Some(SelectGesture::for_widget(&*self.obj(), &selection_gizmo));
     }
 
     fn dispose(&self) {
@@ -180,6 +193,12 @@ impl WidgetImpl for StageWidgetImp {
 
         if let Some(ref render) = self.state.borrow().render_area {
             self.obj().snapshot_child(render, snapshot);
+        }
+
+        if let Some(ref select) = self.state.borrow().selection_gizmo {
+            if select.width() > 1 && select.height() > 1 {
+                self.obj().snapshot_child(select, snapshot);
+            }
         }
 
         snapshot.pop();

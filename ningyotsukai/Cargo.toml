@@ -12,6 +12,7 @@ smol="2.0.2"
 thiserror="2.0.18"
 glib = { version = "0.22.0" }
 gio = { version = "0.22.1" }
+gsk4 = { version = "0.11.0", features = ["v4_10"] }
 graphene = { package="graphene-rs", version = "0.22.0" }
 generational-arena = "0.2.9"
 glow = "0.14.1"
