@@ -32,6 +32,10 @@ pub struct StageRendererState {
     /// The last tick this widget processed, used to calculate timestamps to
     /// feed to Inox2D.
     last_mus: Option<i64>,
+
+    /// Renderdoc API
+    #[cfg(feature = "renderdoc")]
+    doc: Option<renderdoc::RenderDoc<renderdoc::V100>>,
 }
 
 #[derive(Default, glib::Properties)]
@@ -127,6 +131,23 @@ impl GLAreaImpl for StageRendererImp {
         let document = state.document.clone().unwrap();
         let document = document.lock().unwrap();
 
+        #[cfg(feature = "renderdoc")]
+        {
+            use std::ptr::null;
+            if state.doc.is_none() {
+                state.doc = renderdoc::RenderDoc::new().ok();
+            }
+
+            //TODO: Can I get native window handles out of GTK?
+            if state.doc.is_some() {
+                state
+                    .doc
+                    .as_mut()
+                    .unwrap()
+                    .start_frame_capture(null(), null());
+            }
+        }
+
         let native_gl = state.native_gl.as_ref().unwrap();
         let fb = self.obj().framebuffer(native_gl);
 
@@ -157,6 +178,20 @@ impl GLAreaImpl for StageRendererImp {
         drop(state);
 
         self.collect_garbage();
+
+        #[cfg(feature = "renderdoc")]
+        {
+            use std::ptr::null;
+            let mut state = self.state.borrow_mut();
+
+            if state.doc.is_some() {
+                state
+                    .doc
+                    .as_mut()
+                    .unwrap()
+                    .end_frame_capture(null(), null());
+            }
+        }
 
         glib::Propagation::Proceed
     }
