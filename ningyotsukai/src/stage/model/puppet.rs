@@ -1,7 +1,7 @@
 use inox2d::formats::inp::parse_inp_parts;
 use inox2d::model::Model;
 use inox2d::puppet::Puppet as InoxPuppet;
-use inox2d::texture::{ShallowTexture, decode_model_textures};
+use inox2d::texture::ShallowTexture;
 
 use json::JsonValue;
 use std::error::Error;
@@ -44,11 +44,11 @@ impl Puppet {
             self.model.puppet.init_rendering();
             self.model.puppet.init_params();
             self.model.puppet.init_physics();
-        }
 
-        // One frame is required to prevent Inox from choking.
-        self.model.puppet.begin_frame();
-        self.model.puppet.end_frame(0.01);
+            // One frame is required to prevent Inox from choking.
+            self.model.puppet.begin_frame();
+            self.model.puppet.end_frame(0.01);
+        }
 
         self.is_render_initialized = true;
     }
