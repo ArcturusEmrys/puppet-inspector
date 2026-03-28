@@ -159,6 +159,7 @@ impl StageRendererImp {
     fn apply_viewport_to_renderer(&self, renderer: &mut OpenglRenderer, puppet: &StagePuppet) {
         let width = self.obj().width().abs() as u32;
         let height = self.obj().height().abs() as u32;
+        let dpi = self.obj().scale_factor().abs() as u32;
 
         //TODO: Calculate our current viewport position and scale appropriately.
         let mut x = puppet.position().x;
@@ -181,13 +182,13 @@ impl StageRendererImp {
         x -= width as f32 / 2.0 / scale;
         y -= height as f32 / 2.0 / scale;
 
-        renderer.camera.position.x = x;
-        renderer.camera.position.y = y;
-        renderer.camera.scale.x = scale;
-        renderer.camera.scale.y = scale;
+        renderer.camera.position.x = x * dpi as f32;
+        renderer.camera.position.y = y * dpi as f32;
+        renderer.camera.scale.x = scale * dpi as f32;
+        renderer.camera.scale.y = scale * dpi as f32;
 
-        if width > 0 && height > 0 {
-            renderer.resize(width, height);
+        if width > 0 && height > 0 && dpi > 0 {
+            renderer.resize(width * dpi, height * dpi);
         }
     }
 
