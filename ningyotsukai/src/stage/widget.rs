@@ -13,7 +13,7 @@ use std::sync::{Arc, Mutex};
 
 use generational_arena::Index;
 
-use inox2d::math::rect::Rect as InoxRect;
+use glam::Vec2;
 
 use crate::document::Document;
 use crate::stage::gestures::{DragGesture, SelectGesture, ZoomGesture};
@@ -225,7 +225,7 @@ impl WidgetImpl for StageWidgetImp {
 
         snapshot.append_color(
             &gdk4::RGBA::new(1.0, 1.0, 1.0, 1.0),
-            &graphene::Rect::new(0.0, 0.0, size.x(), size.y()),
+            &graphene::Rect::new(0.0, 0.0, size.x, size.y),
         );
 
         drop(document);
@@ -276,8 +276,8 @@ impl StageWidgetImp {
         let width = self.obj().width();
         let height = self.obj().height();
 
-        let stage_width = document.stage().size().x();
-        let stage_height = document.stage().size().y();
+        let stage_width = document.stage().size().x;
+        let stage_height = document.stage().size().y;
 
         //TODO: Off-stage scrolling should be limited to:
         // 1. Minimum: 3/4ths the window size (so you can't normally scroll the stage off)
@@ -308,6 +308,17 @@ impl StageWidgetImp {
             render.measure(gtk4::Orientation::Horizontal, stage_width as i32);
             render.allocate(width as i32, height as i32, -1, None);
         }
+    }
+
+    /// Given a point on the stage (or off of it), calculate where it should
+    /// be relative to this widget's viewport.
+    fn project_stage_to_viewport(&self, point: Vec2) -> Vec2 {
+        let viewport_x = self.hadjustment.borrow().as_ref().unwrap().value() as f32;
+        let viewport_y = self.vadjustment.borrow().as_ref().unwrap().value() as f32;
+        let scale =
+            10.0_f64.powf(self.zadjustment.borrow().as_ref().unwrap().value()) as f32;
+        
+        Vec2::new((point.x - viewport_x) * scale, (point.y - viewport_y) * scale)
     }
 
     fn set_hadjustment(&self, adjust: Option<gtk4::Adjustment>) {
@@ -389,20 +400,29 @@ impl StageWidgetImp {
             });
 
             if let Some(bounds) = puppet.model().puppet.bounds() {
-                let viewport_x = self.hadjustment.borrow().as_ref().unwrap().value() as f32;
-                let viewport_y = self.vadjustment.borrow().as_ref().unwrap().value() as f32;
-                let scale =
-                    10.0_f64.powf(self.zadjustment.borrow().as_ref().unwrap().value()) as f32;
+                let bounds_tl = bounds.top_left_point();
+                let bounds_br = bounds.bottom_right_point();
+
+                let bounds_width = bounds_br.x - bounds_tl.x;
+                let bounds_height = bounds_br.y - bounds_tl.y;
+
+                let adjust = Vec2::new(bounds_width / 2.0, bounds_height / 2.0);
+
+                let viewport_tl = self.project_stage_to_viewport(bounds_tl + adjust);
+                let viewport_br = self.project_stage_to_viewport(bounds_br + adjust);
+
+                let width = viewport_br.x - viewport_tl.x;
+                let height = viewport_br.y - viewport_tl.y;
 
                 gizmo.set_visible(true);
                 gizmo.measure(gtk4::Orientation::Horizontal, bounds.width() as i32);
                 gizmo.allocate(
-                    (bounds.width() * scale) as i32,
-                    (bounds.height() * scale) as i32,
+                    width as i32,
+                    height as i32,
                     -1,
                     Some(Transform::new().translate(&graphene::Point::new(
-                        bounds.top_left_point().x + bounds.width() / 2.0 - (viewport_x * scale),
-                        bounds.top_left_point().y + bounds.height() / 2.0 - (viewport_y * scale),
+                        viewport_tl.x,
+                        viewport_tl.y,
                     ))),
                 );
             } else {

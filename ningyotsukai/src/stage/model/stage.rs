@@ -1,23 +1,23 @@
-use crate::stage::model::coord::Coord;
 use crate::stage::model::puppet::Puppet;
 
 use generational_arena::{Arena, Index};
+use glam::Vec2;
 
 /// The place puppets are rendered to.
 pub struct Stage {
-    size: Coord,
+    size: Vec2,
     puppets: Arena<Puppet>,
 }
 
 impl Stage {
     pub fn new_with_size(size: (f32, f32)) -> Self {
         Stage {
-            size: Coord::new(size.0, size.1),
+            size: Vec2::new(size.0, size.1),
             puppets: Arena::new(),
         }
     }
 
-    pub fn size(&self) -> &Coord {
+    pub fn size(&self) -> &Vec2 {
         &self.size
     }
 

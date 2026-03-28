@@ -162,8 +162,8 @@ impl StageRendererImp {
         let height = self.obj().height().abs() as u32;
 
         //TODO: Calculate our current viewport position and scale appropriately.
-        let mut x = puppet.position().x();
-        let mut y = puppet.position().y();
+        let mut x = puppet.position().x;
+        let mut y = puppet.position().y;
         let mut scale = puppet.scale();
 
         // Apply the viewport scale and position

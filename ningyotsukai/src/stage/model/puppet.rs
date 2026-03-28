@@ -7,10 +7,10 @@ use json::JsonValue;
 use std::error::Error;
 use std::io::Read;
 
-use crate::stage::model::coord::Coord;
+use glam::Vec2;
 
 pub struct Puppet {
-    position: Coord,
+    position: Vec2,
     scale: f32,
     puppet_json: JsonValue,
     model: Model,
@@ -29,7 +29,7 @@ impl Puppet {
         };
 
         Ok(Self {
-            position: Coord::new(0.0, 0.0),
+            position: Vec2::new(0.0, 0.0),
             scale: 1.0,
             puppet_json,
             model,
@@ -61,7 +61,7 @@ impl Puppet {
         &mut self.model
     }
 
-    pub fn position(&self) -> &Coord {
+    pub fn position(&self) -> &Vec2 {
         &self.position
     }
 
