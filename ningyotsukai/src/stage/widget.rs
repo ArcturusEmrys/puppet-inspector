@@ -8,7 +8,7 @@ use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
 
 use std::cell::{Cell, RefCell};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 
 use generational_arena::Index;
@@ -23,6 +23,9 @@ use crate::stage::renderer::StageRenderer;
 #[derive(Default)]
 pub struct StageWidgetState {
     document: Arc<Mutex<Document>>,
+
+    /// List of puppets that are currently selected.
+    selected: HashSet<Index>,
 
     /// Internal accounting widget for the border around the stage.
     border_gizmo: Option<StageBorderGizmo>,
@@ -444,9 +447,12 @@ impl StageWidget {
 
         //First, collect the garbage.
         document.collect_garbage(&mut state.puppet_gizmos);
+        document.collect_garbage_set(&mut state.selected);
 
         for (index, puppet) in document.stage_mut().iter_mut() {
             puppet.ensure_render_initialized();
+
+            let is_selected = state.selected.contains(&index);
 
             let gizmo = state.puppet_gizmos.entry(index).or_insert_with(|| {
                 let gizmo = PuppetBoundsGizmo::new(document_arc.clone(), index);
@@ -491,9 +497,24 @@ impl StageWidget {
                 //Nobody is going to make an emtpy puppet, so we should do... something?! reasonable?!?!
                 gizmo.set_visible(false);
             }
+
+            if is_selected {
+                gizmo.set_state_flags(gtk4::StateFlags::SELECTED, false);
+            } else {
+                gizmo.unset_state_flags(gtk4::StateFlags::SELECTED);
+            }
         }
 
         state.render_area.as_ref().unwrap().queue_render();
         self.queue_draw();
+    }
+
+    pub fn set_selected_puppet(&self, puppet: Option<Index>) {
+        let mut state = self.imp().state.borrow_mut();
+
+        state.selected = HashSet::new();
+        if let Some(puppet) = puppet {
+            state.selected.insert(puppet);
+        }
     }
 }

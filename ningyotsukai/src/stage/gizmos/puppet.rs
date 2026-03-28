@@ -61,7 +61,8 @@ impl ObjectImpl for PuppetBoundsGizmoImp {
             let mut state = drag_end_self.imp().state.borrow_mut();
             let state = state.as_mut().unwrap();
             let mut document = state.document.lock().unwrap();
-            let puppet = document.stage_mut().puppet_mut(state.puppet);
+            let index = state.puppet;
+            let puppet = document.stage_mut().puppet_mut(index);
 
             if let Some(puppet) = puppet {
                 let delta = Vec2::new(now_x as f32, now_y as f32);
@@ -71,6 +72,7 @@ impl ObjectImpl for PuppetBoundsGizmoImp {
             }
 
             if let Some(stage) = drag_end_self.closest::<StageWidget>() {
+                stage.set_selected_puppet(Some(index));
                 // If I do this on the same stack the app hangs
                 glib::timeout_add_local(Duration::new(0, 0), move || {
                     stage.puppet_updated();
@@ -80,6 +82,23 @@ impl ObjectImpl for PuppetBoundsGizmoImp {
         });
 
         self.obj().add_controller(drag);
+
+        let select = gtk4::GestureClick::builder()
+            .button(gdk4::BUTTON_SECONDARY)
+            .build();
+        let select_pressed_self = self.obj().clone();
+        select.connect_pressed(move |_, _, _, _| {
+            let state = select_pressed_self.imp().state.borrow();
+            let index = state.as_ref().unwrap().puppet;
+
+            drop(state);
+            select_pressed_self
+                .closest::<StageWidget>()
+                .unwrap()
+                .set_selected_puppet(Some(index));
+        });
+        self.obj().add_controller(select);
+
         self.obj().set_size_request(0, 0);
     }
 }

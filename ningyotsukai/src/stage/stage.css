@@ -9,5 +9,9 @@ ningyo-selection {
 }
 
 ningyo-puppet {
-    border: 1px solid @theme_fg_color;
+    border: 1px solid transparent;
+}
+
+ningyo-puppet:selected {
+    border-color: black;
 }

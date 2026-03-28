@@ -1,7 +1,7 @@
 use crate::stage::Stage;
 
 use generational_arena::Index;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// A Ningyotsukai document.
 pub struct Document {
@@ -37,6 +37,19 @@ impl Document {
 
         for index in garbage {
             map.remove(&index);
+        }
+    }
+
+    pub fn collect_garbage_set(&self, set: &mut HashSet<Index>) {
+        let mut garbage = vec![];
+        for index in set.iter() {
+            if !self.stage().contains_puppet(*index) {
+                garbage.push(*index);
+            }
+        }
+
+        for index in garbage {
+            set.remove(&index);
         }
     }
 }
