@@ -51,6 +51,10 @@ impl ObjectImpl for PuppetBoundsGizmoImp {
         let drag = gtk4::GestureDrag::builder()
             .button(gdk4::BUTTON_PRIMARY)
             .build();
+        
+        drag.connect_drag_begin(|drag, _, _| {
+            drag.set_state(gtk4::EventSequenceState::Claimed);
+        });
 
         let drag_end_self = self.obj().clone();
         drag.connect_drag_update(move |_, now_x, now_y| {
