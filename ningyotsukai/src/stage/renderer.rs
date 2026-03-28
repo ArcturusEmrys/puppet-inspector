@@ -116,16 +116,14 @@ impl GLAreaImpl for StageRendererImp {
         }
 
         for (index, puppet) in document.stage().iter() {
-            let renderer = state.renderers.entry(index).or_insert_with(|| {
+            let mut renderer = state.renderers.entry(index).or_insert_with(|| {
                 let gl = self.obj().as_glow_context();
 
                 //TODO: Propagate this error to UI instead of panicing
-                let mut render = OpenglRenderer::new(gl, &puppet.model()).unwrap();
-
-                self.apply_viewport_to_renderer(&mut render, &puppet);
-
-                render
+                OpenglRenderer::new(gl, &puppet.model()).unwrap()
             });
+
+            self.apply_viewport_to_renderer(&mut renderer, &puppet);
 
             renderer.set_surface_framebuffer(Some(fb));
             renderer

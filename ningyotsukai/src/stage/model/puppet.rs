@@ -61,8 +61,12 @@ impl Puppet {
         &mut self.model
     }
 
-    pub fn position(&self) -> &Vec2 {
-        &self.position
+    pub fn position(&self) -> Vec2 {
+        self.position
+    }
+
+    pub fn set_position(&mut self, new_pos: Vec2) {
+        self.position = new_pos;
     }
 
     pub fn scale(&self) -> f32 {

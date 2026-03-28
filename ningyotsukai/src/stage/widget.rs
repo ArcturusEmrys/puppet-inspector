@@ -315,10 +315,12 @@ impl StageWidgetImp {
     fn project_stage_to_viewport(&self, point: Vec2) -> Vec2 {
         let viewport_x = self.hadjustment.borrow().as_ref().unwrap().value() as f32;
         let viewport_y = self.vadjustment.borrow().as_ref().unwrap().value() as f32;
-        let scale =
-            10.0_f64.powf(self.zadjustment.borrow().as_ref().unwrap().value()) as f32;
-        
-        Vec2::new((point.x - viewport_x) * scale, (point.y - viewport_y) * scale)
+        let scale = 10.0_f64.powf(self.zadjustment.borrow().as_ref().unwrap().value()) as f32;
+
+        Vec2::new(
+            (point.x - viewport_x) * scale,
+            (point.y - viewport_y) * scale,
+        )
     }
 
     fn set_hadjustment(&self, adjust: Option<gtk4::Adjustment>) {
@@ -377,62 +379,22 @@ impl StageWidgetImp {
     }
 
     fn update_puppets(&self, dt: f32) {
-        let mut state = self.state.borrow_mut();
-        let document = state.document.clone();
-        let mut document = document.lock().unwrap();
+        {
+            let state = self.state.borrow_mut();
+            let document_arc = state.document.clone();
+            let mut document = document_arc.lock().unwrap();
 
-        //First, collect the garbage.
-        document.collect_garbage(&mut state.puppet_gizmos);
+            for (_, puppet) in document.stage_mut().iter_mut() {
+                puppet.ensure_render_initialized();
 
-        for (index, puppet) in document.stage_mut().iter_mut() {
-            puppet.ensure_render_initialized();
-
-            if dt > 0.0 {
-                puppet.model_mut().puppet.begin_frame();
-                puppet.model_mut().puppet.end_frame(dt);
-            }
-
-            let gizmo = state.puppet_gizmos.entry(index).or_insert_with(|| {
-                let gizmo = PuppetBoundsGizmo::new();
-                gizmo.set_parent(&*self.obj());
-
-                gizmo
-            });
-
-            if let Some(bounds) = puppet.model().puppet.bounds() {
-                let bounds_tl = bounds.top_left_point();
-                let bounds_br = bounds.bottom_right_point();
-
-                let bounds_width = bounds_br.x - bounds_tl.x;
-                let bounds_height = bounds_br.y - bounds_tl.y;
-
-                let adjust = Vec2::new(bounds_width / 2.0, bounds_height / 2.0);
-
-                let viewport_tl = self.project_stage_to_viewport(bounds_tl + adjust);
-                let viewport_br = self.project_stage_to_viewport(bounds_br + adjust);
-
-                let width = viewport_br.x - viewport_tl.x;
-                let height = viewport_br.y - viewport_tl.y;
-
-                gizmo.set_visible(true);
-                gizmo.measure(gtk4::Orientation::Horizontal, bounds.width() as i32);
-                gizmo.allocate(
-                    width as i32,
-                    height as i32,
-                    -1,
-                    Some(Transform::new().translate(&graphene::Point::new(
-                        viewport_tl.x,
-                        viewport_tl.y,
-                    ))),
-                );
-            } else {
-                //TODO: Strictly speaking, this is an error state.
-                //Nobody is going to make an emtpy puppet, so we should do... something?! reasonable?!?!
-                gizmo.set_visible(false);
+                if dt > 0.0 {
+                    puppet.model_mut().puppet.begin_frame();
+                    puppet.model_mut().puppet.end_frame(dt);
+                }
             }
         }
 
-        state.render_area.as_ref().unwrap().queue_render();
+        self.obj().puppet_updated();
     }
 }
 
@@ -472,5 +434,66 @@ impl StageWidget {
     fn bind(&self) {
         self.set_hexpand(true);
         self.set_vexpand(true);
+    }
+
+    /// Called by child gizmos whenever they change something with puppets.
+    pub fn puppet_updated(&self) {
+        let mut state = self.imp().state.borrow_mut();
+        let document_arc = state.document.clone();
+        let mut document = document_arc.lock().unwrap();
+
+        //First, collect the garbage.
+        document.collect_garbage(&mut state.puppet_gizmos);
+
+        for (index, puppet) in document.stage_mut().iter_mut() {
+            puppet.ensure_render_initialized();
+
+            let gizmo = state.puppet_gizmos.entry(index).or_insert_with(|| {
+                let gizmo = PuppetBoundsGizmo::new(document_arc.clone(), index);
+                gizmo.set_parent(self);
+
+                gizmo
+            });
+
+            if let Some(bounds) = puppet.model().puppet.bounds() {
+                let bounds_tl = bounds.top_left_point();
+                let bounds_br = bounds.bottom_right_point();
+
+                let bounds_width = bounds_br.x - bounds_tl.x;
+                let bounds_height = bounds_br.y - bounds_tl.y;
+
+                let adjust = Vec2::new(bounds_width / 2.0, bounds_height / 2.0);
+                let offset = puppet.position();
+
+                let viewport_tl = self
+                    .imp()
+                    .project_stage_to_viewport(bounds_tl + adjust + offset);
+                let viewport_br = self
+                    .imp()
+                    .project_stage_to_viewport(bounds_br + adjust + offset);
+
+                let width = viewport_br.x - viewport_tl.x;
+                let height = viewport_br.y - viewport_tl.y;
+
+                gizmo.set_visible(true);
+                gizmo.measure(gtk4::Orientation::Horizontal, bounds.width() as i32);
+                gizmo.allocate(
+                    width as i32,
+                    height as i32,
+                    -1,
+                    Some(
+                        Transform::new()
+                            .translate(&graphene::Point::new(viewport_tl.x, viewport_tl.y)),
+                    ),
+                );
+            } else {
+                //TODO: Strictly speaking, this is an error state.
+                //Nobody is going to make an emtpy puppet, so we should do... something?! reasonable?!?!
+                gizmo.set_visible(false);
+            }
+        }
+
+        state.render_area.as_ref().unwrap().queue_render();
+        self.queue_draw();
     }
 }

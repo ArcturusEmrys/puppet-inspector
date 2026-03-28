@@ -26,6 +26,14 @@ impl Stage {
         self.puppets.insert(puppet)
     }
 
+    pub fn puppet(&self, index: Index) -> Option<&Puppet> {
+        self.puppets.get(index)
+    }
+
+    pub fn puppet_mut(&mut self, index: Index) -> Option<&mut Puppet> {
+        self.puppets.get_mut(index)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = (Index, &Puppet)> {
         self.puppets.iter()
     }
