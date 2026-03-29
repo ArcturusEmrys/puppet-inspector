@@ -19,6 +19,7 @@
                 <property name="editable">false</property>
                 <layout>
                     <property name="column">1</property>
+                    <property name="column-span">3</property>
                     <property name="row">0</property>
                 </layout>
             </object>
@@ -39,6 +40,7 @@
                 <property name="editable">false</property>
                 <layout>
                     <property name="column">1</property>
+                    <property name="column-span">3</property>
                     <property name="row">1</property>
                 </layout>
             </object>
@@ -59,13 +61,14 @@
                 <property name="editable">false</property>
                 <layout>
                     <property name="column">1</property>
+                    <property name="column-span">3</property>
                     <property name="row">2</property>
                 </layout>
             </object>
         </child>
         <child>
             <object class="GtkLabel">
-                <property name="label">Transform offset</property>
+                <property name="label">Translation</property>
                 <property name="xalign">0.0</property>
                 <layout>
                     <property name="column">0</property>
@@ -74,11 +77,102 @@
             </object>
         </child>
         <child>
-            <object class="GtkBox">
-                <!-- Todo: Transform offset editor -->
+            <object class="GtkEntry" id="transform_translate_x_field">
+                <property name="hexpand">true</property>
+                <property name="editable">false</property>
                 <layout>
                     <property name="column">1</property>
                     <property name="row">3</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkEntry" id="transform_translate_y_field">
+                <property name="hexpand">true</property>
+                <property name="editable">false</property>
+                <layout>
+                    <property name="column">2</property>
+                    <property name="row">3</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkEntry" id="transform_translate_z_field">
+                <property name="hexpand">true</property>
+                <property name="editable">false</property>
+                <layout>
+                    <property name="column">3</property>
+                    <property name="row">3</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">Rotation</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">4</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkEntry" id="transform_rotate_x_field">
+                <property name="hexpand">true</property>
+                <property name="editable">false</property>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">4</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkEntry" id="transform_rotate_y_field">
+                <property name="hexpand">true</property>
+                <property name="editable">false</property>
+                <layout>
+                    <property name="column">2</property>
+                    <property name="row">4</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkEntry" id="transform_rotate_z_field">
+                <property name="hexpand">true</property>
+                <property name="editable">false</property>
+                <layout>
+                    <property name="column">3</property>
+                    <property name="row">4</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkLabel">
+                <property name="label">Scale</property>
+                <property name="xalign">0.0</property>
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">5</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkEntry" id="transform_scale_x_field">
+                <property name="hexpand">true</property>
+                <property name="editable">false</property>
+                <layout>
+                    <property name="column">1</property>
+                    <property name="row">5</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkEntry" id="transform_scale_y_field">
+                <property name="hexpand">true</property>
+                <property name="editable">false</property>
+                <layout>
+                    <property name="column">2</property>
+                    <property name="row">5</property>
                 </layout>
             </object>
         </child>
@@ -87,8 +181,9 @@
                 <property name="hexpand">true</property>
                 <property name="label">Enabled</property>
                 <layout>
+                    <property name="column-span">3</property>
                     <property name="column">1</property>
-                    <property name="row">4</property>
+                    <property name="row">6</property>
                 </layout>
             </object>
         </child>
@@ -97,8 +192,20 @@
                 <property name="hexpand">true</property>
                 <property name="label">Lock to root</property>
                 <layout>
+                    <property name="column-span">3</property>
                     <property name="column">1</property>
-                    <property name="row">5</property>
+                    <property name="row">7</property>
+                </layout>
+            </object>
+        </child>
+        <child>
+            <object class="GtkCheckButton" id="transform_pixel_snap_field">
+                <property name="hexpand">true</property>
+                <property name="label">Snap transform to pixels</property>
+                <layout>
+                    <property name="column-span">3</property>
+                    <property name="column">1</property>
+                    <property name="row">8</property>
                 </layout>
             </object>
         </child>

@@ -28,7 +28,25 @@ pub struct NodeInspectorImp {
     #[template_child]
     zsort_field: TemplateChild<gtk4::Entry>,
     #[template_child]
+    transform_translate_x_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
+    transform_translate_y_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
+    transform_translate_z_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
+    transform_rotate_x_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
+    transform_rotate_y_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
+    transform_rotate_z_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
+    transform_scale_x_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
+    transform_scale_y_field: TemplateChild<gtk4::Entry>,
+    #[template_child]
     lock_to_root_field: TemplateChild<gtk4::CheckButton>,
+    #[template_child]
+    transform_pixel_snap_field: TemplateChild<gtk4::CheckButton>,
 }
 
 #[glib::object_subclass]
@@ -95,5 +113,41 @@ impl NodeInspector {
             .buffer()
             .set_text(&format!("{}", node.zsort));
         self.imp().lock_to_root_field.set_active(node.lock_to_root);
+
+        self.imp()
+            .transform_translate_x_field
+            .buffer()
+            .set_text(&format!("{}", node.trans_offset.translation.x));
+        self.imp()
+            .transform_translate_y_field
+            .buffer()
+            .set_text(&format!("{}", node.trans_offset.translation.y));
+        self.imp()
+            .transform_translate_z_field
+            .buffer()
+            .set_text(&format!("{}", node.trans_offset.translation.z));
+        self.imp()
+            .transform_rotate_x_field
+            .buffer()
+            .set_text(&format!("{}", node.trans_offset.rotation.x));
+        self.imp()
+            .transform_rotate_y_field
+            .buffer()
+            .set_text(&format!("{}", node.trans_offset.rotation.y));
+        self.imp()
+            .transform_rotate_z_field
+            .buffer()
+            .set_text(&format!("{}", node.trans_offset.rotation.z));
+        self.imp()
+            .transform_scale_x_field
+            .buffer()
+            .set_text(&format!("{}", node.trans_offset.scale.x));
+        self.imp()
+            .transform_scale_y_field
+            .buffer()
+            .set_text(&format!("{}", node.trans_offset.scale.y));
+        self.imp()
+            .transform_pixel_snap_field
+            .set_active(node.trans_offset.pixel_snap);
     }
 }
