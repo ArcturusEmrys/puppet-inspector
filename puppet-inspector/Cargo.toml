@@ -7,8 +7,8 @@ license = "GPL-3.0-or-later"
 [dependencies]
 glib = { version = "0.22.0" }
 gio = { version = "0.22.1" }
-inox2d = { git = "https://github.com/ArcturusEmrys/inox2d", rev = "66021b0d5df6eed70980ea1d2e9e35df160c08e3" }
-inox2d-opengl = { git = "https://github.com/ArcturusEmrys/inox2d", rev = "66021b0d5df6eed70980ea1d2e9e35df160c08e3" }
+inox2d = { git = "https://github.com/ArcturusEmrys/inox2d", rev = "8f97e9af23dab15c4aef92d376deded01b7479fb" }
+inox2d-opengl = { git = "https://github.com/ArcturusEmrys/inox2d", rev = "8f97e9af23dab15c4aef92d376deded01b7479fb" }
 json = "0.12.4"
 gl46 = "0.2.1"
 ningyo-look-and-feel = { path = "../ningyo-look-and-feel" }
