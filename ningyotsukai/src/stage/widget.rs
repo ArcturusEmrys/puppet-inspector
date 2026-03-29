@@ -540,4 +540,14 @@ impl StageWidget {
             (point.y - viewport_y) * scale,
         )
     }
+
+    /// Given a point on the viewport, calculate where it should be on the
+    /// stage.
+    pub fn project_viewport_to_stage(&self, point: Vec2) -> Vec2 {
+        let viewport_x = self.imp().hadjustment.borrow().as_ref().unwrap().value() as f32;
+        let viewport_y = self.imp().vadjustment.borrow().as_ref().unwrap().value() as f32;
+        let scale = 10.0_f64.powf(self.imp().zadjustment.borrow().as_ref().unwrap().value()) as f32;
+
+        Vec2::new(point.x / scale + viewport_x, point.y / scale + viewport_y)
+    }
 }

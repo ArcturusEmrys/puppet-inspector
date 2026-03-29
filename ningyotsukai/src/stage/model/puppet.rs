@@ -92,6 +92,10 @@ impl Puppet {
         self.scale
     }
 
+    pub fn set_scale(&mut self, new_scale: f32) {
+        self.scale = new_scale
+    }
+
     /// Update the puppet's physics simulations.
     pub fn update(&mut self, dt: f32) {
         self.ensure_render_initialized();

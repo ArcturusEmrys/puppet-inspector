@@ -12,12 +12,13 @@ use std::sync::{Arc, Mutex};
 
 use inox2d::render::InoxRendererExt;
 use inox2d_opengl::OpenglRenderer;
-use ningyo_extensions::GLAreaExt2;
+use ningyo_extensions::{GLAreaExt2, WidgetExt2};
 
 use generational_arena::Index;
 
 use crate::document::Document;
 use crate::stage::Puppet as StagePuppet;
+use crate::stage::StageWidget;
 
 #[derive(Default)]
 pub struct StageRendererState {
@@ -157,30 +158,38 @@ impl GLAreaImpl for StageRendererImp {
 
 impl StageRendererImp {
     fn apply_viewport_to_renderer(&self, renderer: &mut OpenglRenderer, puppet: &StagePuppet) {
+        let stage = self.obj().closest::<StageWidget>().unwrap();
+
         let width = self.obj().width().abs() as u32;
         let height = self.obj().height().abs() as u32;
         let dpi = self.obj().scale_factor().abs() as u32;
 
-        //TODO: Calculate our current viewport position and scale appropriately.
-        let mut x = puppet.position().x;
-        let mut y = puppet.position().y;
         let mut scale = puppet.scale();
+        let zoom = if let Some(ref zadjust) = *self.zadjustment.borrow() {
+            10.0_f32.powf(zadjust.value() as f32)
+        } else {
+            1.0
+        };
+
+        scale *= zoom;
+
+        let mut x = 0.0;
+        let mut y = 0.0;
+
+        //Cancel out the center coordinate offset Inox uses
+        x -= width as f32 / 2.0 / scale;
+        y -= height as f32 / 2.0 / scale;
 
         // Apply the viewport scale and position
         if let Some(ref hadjust) = *self.hadjustment.borrow() {
-            x -= hadjust.value() as f32;
+            x -= hadjust.value() as f32 / puppet.scale();
         }
         if let Some(ref vadjust) = *self.vadjustment.borrow() {
-            y -= vadjust.value() as f32;
-        }
-        if let Some(ref zadjust) = *self.zadjustment.borrow() {
-            let unlogged = 10.0_f32.powf(zadjust.value() as f32);
-            scale *= unlogged;
+            y -= vadjust.value() as f32 / puppet.scale();
         }
 
-        // Cancel out the center coordinate offset that Inox uses for some reason
-        x -= width as f32 / 2.0 / scale;
-        y -= height as f32 / 2.0 / scale;
+        x += puppet.position().x / puppet.scale();
+        y += puppet.position().y / puppet.scale();
 
         renderer.camera.position.x = x;
         renderer.camera.position.y = y;

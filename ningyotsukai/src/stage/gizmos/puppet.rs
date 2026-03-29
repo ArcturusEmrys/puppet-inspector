@@ -11,7 +11,6 @@ use std::time::Duration;
 
 use generational_arena::Index;
 use glam::Vec2;
-use glam::Vec3Swizzles;
 
 use ningyo_extensions::prelude::*;
 
@@ -148,25 +147,18 @@ impl PuppetBoundsGizmo {
         let puppet = document.stage().puppet(state.puppet).unwrap();
 
         if let Some(bounds) = puppet.bounds() {
-            let bounds_tl = bounds.top_left_point();
-            let bounds_br = bounds.bottom_right_point();
+            let puppet_scale = puppet.scale();
+
+            let bounds_tl = bounds.top_left_point() * puppet_scale;
+            let bounds_br = bounds.bottom_right_point() * puppet_scale;
 
             let bounds_width = bounds_br.x - bounds_tl.x;
             let bounds_height = bounds_br.y - bounds_tl.y;
 
-            let root_offset = puppet
-                .model()
-                .puppet
-                .nodes()
-                .get_node(puppet.model().puppet.nodes().root_node_id)
-                .unwrap()
-                .trans_offset
-                .translation
-                .xy();
             let offset = puppet.position();
 
-            let viewport_tl = stage.project_stage_to_viewport(bounds_tl + offset + root_offset);
-            let viewport_br = stage.project_stage_to_viewport(bounds_br + offset + root_offset);
+            let viewport_tl = stage.project_stage_to_viewport(bounds_tl + offset);
+            let viewport_br = stage.project_stage_to_viewport(bounds_br + offset);
 
             let width = viewport_br.x - viewport_tl.x;
             let height = viewport_br.y - viewport_tl.y;
