@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<interface>
+    <object class="NGTPanelFrame" id="panel">
+        <property name="name">Trackers</property>
+        <child>
+            <object class="NGTTrackerPanel" id="contents">
+            </object>
+        </child>
+    </object>
+</interface>

@@ -24,11 +24,15 @@
                 <attribute name="label" translatable="yes">Open...</attribute>
                 <attribute name="action">win.open</attribute>
             </item>
-        </section>
-        <section>
             <item>
                 <attribute name="label" translatable="yes">Import Puppet...</attribute>
                 <attribute name="action">doc.import-puppet</attribute>
+            </item>
+        </section>
+        <section>
+            <item>
+                <attribute name="label" translatable="yes">Trackers</attribute>
+                <attribute name="action">doc.panels-tracker</attribute>
             </item>
         </section>
         <section>

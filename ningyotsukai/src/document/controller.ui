@@ -10,7 +10,7 @@
                 <property name="hexpand">true</property>
                 <property name="vexpand">true</property>
                 <property name="start_child">
-                    <object class="NGTPanelDock">
+                    <object class="NGTPanelDock" id="new_panel_dock">
                         <property name="hexpand">false</property>
                         <property name="vexpand">false</property>
                     </object>

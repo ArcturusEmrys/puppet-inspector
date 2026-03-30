@@ -12,6 +12,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::document::model::Document;
 use crate::panels::PanelDock;
+use crate::panels::PanelFrame;
 use crate::stage::{Puppet, StageWidget};
 
 use ningyo_extensions::{FileIn, WidgetExt2};
@@ -32,6 +33,8 @@ pub struct DocumentControllerImp {
     zoom_adjust: TemplateChild<gtk4::Adjustment>,
     #[template_child]
     filepicker_puppet: TemplateChild<gtk4::FileDialog>,
+    #[template_child]
+    new_panel_dock: TemplateChild<PanelDock>,
 
     state: RefCell<DocumentControllerState>,
 }
@@ -62,25 +65,50 @@ impl ObjectImpl for DocumentControllerImp {
         let doc = gio::SimpleActionGroup::new();
 
         let doc_controller_import_puppet = self.obj().clone();
-        doc.add_action_entries([gio::ActionEntry::builder("import-puppet")
-            .activate(move |_, _, _| {
-                let callback_self = doc_controller_import_puppet.clone();
-                doc_controller_import_puppet.imp().filepicker_puppet.open(
-                    doc_controller_import_puppet.window().as_ref(),
-                    Some(&gio::Cancellable::new()),
-                    move |file_or_error| {
-                        let maybe_error: Result<(), Box<dyn Error>> = (|| {
-                            callback_self.open_document(file_or_error?)?;
-                            Ok(())
-                        })();
+        let doc_controller_panels_tracker = self.obj().clone();
+        doc.add_action_entries([
+            gio::ActionEntry::builder("import-puppet")
+                .activate(move |_, _, _| {
+                    let callback_self = doc_controller_import_puppet.clone();
+                    doc_controller_import_puppet.imp().filepicker_puppet.open(
+                        doc_controller_import_puppet.window().as_ref(),
+                        Some(&gio::Cancellable::new()),
+                        move |file_or_error| {
+                            let maybe_error: Result<(), Box<dyn Error>> = (|| {
+                                callback_self.open_document(file_or_error?)?;
+                                Ok(())
+                            })(
+                            );
 
-                        if let Err(e) = maybe_error {
-                            eprintln!("{:?}", e);
-                        }
-                    },
-                )
-            })
-            .build()]);
+                            if let Err(e) = maybe_error {
+                                eprintln!("{:?}", e);
+                            }
+                        },
+                    )
+                })
+                .build(),
+            gio::ActionEntry::builder("panels-tracker")
+                .state(false.into())
+                .activate(move |_, action, _| {
+                    let panel_open: bool = action.state().unwrap().get().unwrap();
+
+                    if !panel_open {
+                        let builder = gtk4::Builder::from_resource(
+                            "/live/arcturus/ningyotsukai/tracker/panel_frame.ui",
+                        );
+                        let panel: PanelFrame = builder.object("panel").unwrap();
+
+                        doc_controller_panels_tracker
+                            .imp()
+                            .new_panel_dock
+                            .append(&panel);
+
+                        action.set_state(&glib::Variant::from(!panel_open));
+                    }
+                    // TODO: Allow closing the panel from the menu item.
+                })
+                .build(),
+        ]);
 
         self.obj().connect_realize(move |selfpoi| {
             selfpoi

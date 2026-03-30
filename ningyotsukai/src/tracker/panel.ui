@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<interface>
+    <template class="NGTTrackerPanel" parent="GtkBox">
+        <property name="orientation">vertical</property>
+        <child>
+            <object class="GtkScrolledWindow">
+                <child>
+                    <object class="GtkListView">
+                        <property name="factory">
+                            <object class="GtkSignalListItemFactory" id="tracker_factory">
+                            </object>
+                        </property>
+                        <property name="model">
+                            <object class="GtkSingleSelection" id="tracker_select">
+                                <property name="model">
+                                    <object class="GListStore" id="tracker_model">
+                                    </object>
+                                </property>
+                            </object>
+                        </property>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </template>
+</interface>
