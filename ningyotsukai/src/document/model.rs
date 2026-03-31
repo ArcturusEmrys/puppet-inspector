@@ -3,15 +3,19 @@ use crate::stage::Stage;
 use generational_arena::Index;
 use std::collections::{HashMap, HashSet};
 
+use crate::tracker::Trackers;
+
 /// A Ningyotsukai document.
 pub struct Document {
     stage: Stage,
+    trackers: Trackers,
 }
 
 impl Default for Document {
     fn default() -> Self {
         Document {
             stage: Stage::new_with_size((1920.0, 1080.0)),
+            trackers: Trackers::new(),
         }
     }
 }
@@ -23,6 +27,10 @@ impl Document {
 
     pub fn stage_mut(&mut self) -> &mut Stage {
         &mut self.stage
+    }
+
+    pub fn trackers(&self) -> &Trackers {
+        &self.trackers
     }
 
     /// Given a map of puppet-associated items, clear out any entries whose
