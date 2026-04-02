@@ -2,11 +2,11 @@ use crate::io::{IoMessage, IoResponse, start};
 use crate::tracker::cookie::TrackerCookie;
 use crate::tracker::reference::TrackerRef;
 
-use smol::channel::{Receiver, Sender, TryRecvError};
+use smol::channel::{Receiver, RecvError, Sender};
 
 use std::cell::RefCell;
 use std::net::ToSocketAddrs;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 
 /// Manager type for all tracker communication.
 ///
@@ -19,7 +19,6 @@ pub struct TrackerManagerImp {
     io_send: Sender<IoMessage<TrackerCookie>>,
     io_recv: Receiver<IoResponse<TrackerCookie>>,
     next_cookie: u32,
-    recv_fiber: Option<glib::SourceId>,
 }
 
 impl TrackerManager {
@@ -38,22 +37,10 @@ impl TrackerManager {
             io_send,
             io_recv,
             next_cookie: 0,
-            recv_fiber: None,
         })));
 
-        let recv_fiber = glib::idle_add_local({
-            let tracker_manager = Rc::<TrackerManager>::downgrade(&me);
-            move || {
-                if let Some(tracker_manager) = tracker_manager.upgrade() {
-                    tracker_manager.tick();
-                    glib::ControlFlow::Continue
-                } else {
-                    glib::ControlFlow::Break
-                }
-            }
-        });
-
-        me.0.borrow_mut().recv_fiber = Some(recv_fiber);
+        let tracker_manager = Rc::<TrackerManager>::downgrade(&me);
+        glib::MainContext::default().spawn_local(Self::main_thread_proc(tracker_manager));
 
         me
     }
@@ -89,30 +76,40 @@ impl TrackerManager {
 
     /// Run any background processing on messages sent from the IO thread.
     ///
-    /// This is scheduled to be periodically called in a glib idle function
-    pub fn tick(&self) {
-        let me = self.0.borrow();
-        match me.io_recv.try_recv() {
-            Ok(IoResponse::Error(e, c)) => {
-                //TODO: Display the error somewhere more user friendly.
-                eprintln!("ERROR: {}", e);
-            }
-            Ok(IoResponse::VtsTrackerPacket(data, c)) => {
-                match c {
-                    TrackerCookie::TrackerRef(tracker_ref) => {
-                        if let Some(document) = tracker_ref.document() {
-                            for (_, puppet) in document.lock().unwrap().stage_mut().iter_mut() {
-                                puppet.apply_bindings(&data);
+    /// This should be invoked from a glib MainContext
+    pub async fn main_thread_proc(tracker_manager: Weak<TrackerManager>) {
+        loop {
+            if let Some(tracker_manager) = tracker_manager.upgrade() {
+                let me = tracker_manager.0.borrow();
+                match me.io_recv.recv().await {
+                    Ok(IoResponse::Error(e, c)) => {
+                        //TODO: Display the error somewhere more user friendly.
+                        eprintln!("ERROR: {}", e);
+                    }
+                    Ok(IoResponse::VtsTrackerPacket(data, c)) => {
+                        match c {
+                            TrackerCookie::TrackerRef(tracker_ref) => {
+                                if let Some(document) = tracker_ref.document() {
+                                    for (_, puppet) in
+                                        document.lock().unwrap().stage_mut().iter_mut()
+                                    {
+                                        puppet.apply_bindings(&data);
+                                    }
+                                }
                             }
+                            TrackerCookie::Sequential(_) => {
+                                eprintln!(
+                                    "ERROR: Received VTS tracker packet on a sequential cookie"
+                                );
+                            } //can't do nothing about this
                         }
                     }
-                    TrackerCookie::Sequential(_) => {
-                        eprintln!("ERROR: Received VTS tracker packet on a sequential cookie");
-                    } //can't do nothing about this
+                    Err(RecvError) => {
+                        eprintln!("ERROR: CLOSED");
+                        return;
+                    }
                 }
             }
-            Err(TryRecvError::Closed) => eprintln!("ERROR: CLOSED"),
-            Err(TryRecvError::Empty) => {} //ok, so...?
         }
     }
 
@@ -123,21 +120,18 @@ impl TrackerManager {
     /// in the system.
     pub fn shutdown(&self) {
         let cookie = self.next_cookie();
-        let mut me = self.0.borrow_mut();
+        let me = self.0.borrow();
         me.io_send.send_blocking(IoMessage::Exit(cookie)).unwrap();
-
-        me.recv_fiber.take().unwrap().remove();
     }
 }
 
 impl Drop for TrackerManagerImp {
     fn drop(&mut self) {
         // If we were dropped without shutting down, shut down anyway.
-        if let Some(recv_fiber) = self.recv_fiber.take() {
-            self.io_send
-                .send_blocking(IoMessage::Exit(TrackerCookie::Sequential(0)))
-                .unwrap();
-            recv_fiber.remove();
-        }
+        // Note that we deliberately ignore the error here in case shutdown
+        // already happened, so we don't panic the poor thread cleaning us up.
+        let _ = self
+            .io_send
+            .send_blocking(IoMessage::Exit(TrackerCookie::Sequential(0)));
     }
 }
