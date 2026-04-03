@@ -15,11 +15,14 @@ use crate::tracker::reference::{TrackerParamRefItem, TrackerRef, TrackerRefItem}
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 struct State {
     tracker_manager: Rc<TrackerManager>,
 
     document: Arc<Mutex<Document>>,
+
+    pending_update: Option<glib::SourceId>,
 }
 
 #[derive(CompositeTemplate, Default)]
@@ -265,9 +268,7 @@ impl ObjectImpl for TrackerPanelImp {
             let item = list_item.item().unwrap();
             let tracker_param_ref_item = item.downcast_ref::<TrackerParamRefItem>().unwrap();
 
-            if let Some(value) = tracker_param_ref_item.contents().value() {
-                label.set_label(&format!("{}", value));
-            }
+            label.set_label(&format!("{}", tracker_param_ref_item.contents().value()));
         });
     }
 }
@@ -320,7 +321,26 @@ impl TrackerPanel {
             let tracker_manager_self = idle_self.clone().downgrade();
             idle_tm.connect_params_changed(move || {
                 if let Some(tracker_manager_self) = tracker_manager_self.upgrade() {
-                    tracker_manager_self.tracker_params_updated();
+                    let mut state = tracker_manager_self.imp().state.borrow_mut();
+                    let state = state.as_mut().unwrap();
+                    if state.pending_update.is_some() {
+                        return glib::ControlFlow::Continue;
+                    }
+
+                    let pending_self = tracker_manager_self.clone();
+                    state.pending_update = Some(glib::timeout_add_local_once(
+                        Duration::new(0, 100_000_000),
+                        move || {
+                            let mut state2 = pending_self.imp().state.borrow_mut();
+                            let state = state2.as_mut().unwrap();
+
+                            state.pending_update = None;
+                            drop(state2);
+
+                            pending_self.tracker_params_updated();
+                        },
+                    ));
+
                     return glib::ControlFlow::Continue;
                 }
 
@@ -331,6 +351,7 @@ impl TrackerPanel {
         *self.imp().state.borrow_mut() = Some(State {
             tracker_manager,
             document,
+            pending_update: None,
         });
 
         self.imp().populate_list();
@@ -347,7 +368,9 @@ impl TrackerPanel {
             let document = document.lock().unwrap();
             if let Some(data) = document.trackers().data(tracker_ref.tracker_index()) {
                 for (name, datatype) in data.iter_params() {
-                    refs.push(tracker_ref.with_param_ref(name, datatype).into());
+                    if let Some(value) = data.value(name, datatype) {
+                        refs.push(tracker_ref.with_param(name, datatype, value).into());
+                    }
                 }
             }
         }
