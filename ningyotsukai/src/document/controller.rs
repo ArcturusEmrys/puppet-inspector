@@ -15,7 +15,7 @@ use crate::document::model::Document;
 use crate::panels::PanelDock;
 use crate::panels::PanelFrame;
 use crate::stage::{Puppet, StageWidget};
-use crate::tracker::{TrackerManager, TrackerPanel};
+use crate::tracker::{TrackerManager, TrackerPanel, TrackerParamPanel};
 
 use ningyo_extensions::{FileIn, WidgetExt2};
 
@@ -65,6 +65,7 @@ impl ObjectImpl for DocumentControllerImp {
 
         let doc_controller_import_puppet = self.obj().clone();
         let doc_controller_panels_tracker = self.obj().clone();
+        let doc_controller_panels_tracker_params = self.obj().clone();
         doc.add_action_entries([
             gio::ActionEntry::builder("import-puppet")
                 .activate(move |_, _, _| {
@@ -104,6 +105,33 @@ impl ObjectImpl for DocumentControllerImp {
                         contents.bind(tracker_manager, document);
 
                         doc_controller_panels_tracker
+                            .imp()
+                            .new_panel_dock
+                            .append(&panel);
+
+                        action.set_state(&glib::Variant::from(!panel_open));
+                    }
+                    // TODO: Allow closing the panel from the menu item.
+                })
+                .build(),
+            gio::ActionEntry::builder("panels-tracker-params")
+                .state(false.into())
+                .activate(move |_, action, _| {
+                    let panel_open: bool = action.state().unwrap().get().unwrap();
+
+                    if !panel_open {
+                        let state = doc_controller_panels_tracker_params.imp().state.borrow();
+                        let tracker_manager = state.as_ref().unwrap().tracker_manager.clone();
+                        let document = state.as_ref().unwrap().document.clone();
+                        let builder = gtk4::Builder::from_resource(
+                            "/live/arcturus/ningyotsukai/tracker/params/panel_frame.ui",
+                        );
+                        let panel: PanelFrame = builder.object("panel").unwrap();
+                        let contents: TrackerParamPanel = builder.object("contents").unwrap();
+
+                        contents.bind(tracker_manager, document);
+
+                        doc_controller_panels_tracker_params
                             .imp()
                             .new_panel_dock
                             .append(&panel);

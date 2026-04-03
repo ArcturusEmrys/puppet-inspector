@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<interface>
+    <template class="NGTTrackerParamPanel" parent="GtkBox">
+        <property name="orientation">vertical</property>
+        <child>
+            <object class="GtkDropDown">
+                <property name="factory">
+                    <object class="GtkSignalListItemFactory" id="tracker_factory">
+                    </object>
+                </property>
+                <property name="model">
+                    <object class="GtkSingleSelection" id="tracker_select">
+                        <property name="model">
+                            <object class="GListStore" id="tracker_model">
+                            </object>
+                        </property>
+                    </object>
+                </property>
+            </object>
+        </child>
+        <child>
+            <object class="GtkScrolledWindow">
+                <property name="height-request">300</property>
+                <property name="vexpand">true</property>
+                <child>
+                    <object class="GtkColumnView">
+                        <property name="model">
+                            <object class="GtkSingleSelection" id="param_select">
+                                <property name="model">
+                                    <object class="GListStore" id="param_model">
+                                    </object>
+                                </property>
+                            </object>
+                        </property>
+                        <child>
+                            <object class="GtkColumnViewColumn">
+                                <property name="title">Name</property>
+                                <property name="expand">true</property>
+                                <property name="factory">
+                                    <object class="GtkSignalListItemFactory" id="param_name_factory">
+                                    </object>
+                                </property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkColumnViewColumn">
+                                <property name="title">Type</property>
+                                <property name="factory">
+                                    <object class="GtkSignalListItemFactory" id="param_type_factory">
+                                    </object>
+                                </property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkColumnViewColumn">
+                                <property name="title">Value</property>
+                                <property name="expand">true</property>
+                                <property name="factory">
+                                    <object class="GtkSignalListItemFactory" id="param_value_factory">
+                                    </object>
+                                </property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </template>
+</interface>

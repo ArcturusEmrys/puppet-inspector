@@ -34,6 +34,10 @@
                 <attribute name="label" translatable="yes">Trackers</attribute>
                 <attribute name="action">doc.panels-tracker</attribute>
             </item>
+            <item>
+                <attribute name="label" translatable="yes">Tracker Parameters</attribute>
+                <attribute name="action">doc.panels-tracker-params</attribute>
+            </item>
         </section>
         <section>
             <item>
