@@ -24,7 +24,7 @@ impl RatioBinding {
         }
 
         let out_range_width = self.out_range.y - self.out_range.x;
-        let mut outer_t = (inner_t - self.out_range.x) / out_range_width;
+        let mut outer_t = inner_t * out_range_width + self.out_range.x;
         if outer_t < self.out_range.x {
             outer_t = self.out_range.x;
         } else if outer_t > self.out_range.y {
