@@ -1039,6 +1039,7 @@ dependencies = [
  "inox2d",
  "inox2d-opengl",
  "json",
+ "mlua",
  "ningyo-binding",
  "ningyo-extensions",
  "ningyo-look-and-feel",

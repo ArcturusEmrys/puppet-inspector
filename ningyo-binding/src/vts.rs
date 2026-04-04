@@ -285,7 +285,7 @@ impl AsTrackerPacket for VtsPacket {
                     "mouthFrown_L",
                     "mouthFrown_R",
                 );
-            } else if (packet.contains("eyeLookOutLeft", "Blendshape")) {
+            } else if packet.contains("eyeLookOutLeft", "Blendshape") {
                 //Meowface
                 Self::synthesize_left_eye(
                     &mut packet,
