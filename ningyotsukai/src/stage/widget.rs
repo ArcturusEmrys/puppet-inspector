@@ -219,6 +219,9 @@ impl ObjectImpl for StageWidgetImp {
                 glib::subclass::Signal::builder("selection-changed")
                     .param_types([SignalType::with_static_scope(StageWidget::static_type())])
                     .build(),
+                glib::subclass::Signal::builder("updated")
+                    .param_types([SignalType::with_static_scope(StageWidget::static_type())])
+                    .build(),
             ]
         })
     }
@@ -519,12 +522,14 @@ impl StageWidget {
         self.queue_draw();
 
         // NOTE: This is not actually a selection change, it's just there to
-        // force the resize gizmo to update.
-        //
-        // Hence why we don't call emit_selection_changed.
+        // force the resize gizmo to update. Think of it like the resize gizmo
+        // connecting to both the selection and update signals with the same
+        // function.
         if let Some(resize) = state.selection_gizmo.as_ref() {
             resize.selection_changed(&self, state.selected.iter(), &state.puppet_gizmos);
         }
+
+        self.emit_updated();
     }
 
     pub fn set_selected_puppet(&self, puppet: Option<Index>) {
@@ -599,9 +604,15 @@ impl StageWidget {
 }
 
 pub trait StageWidgetExt {
+    /// Signal that is fired when the user changes the selection on screen.
     fn connect_selection_changed<F: Fn(&Self) + 'static>(&self, f: F) -> glib::SignalHandlerId;
 
     fn emit_selection_changed(&self);
+
+    /// Signal that is fired when puppets update (i.e. every frame).
+    fn connect_updated<F: Fn(&Self) + 'static>(&self, f: F) -> glib::SignalHandlerId;
+
+    fn emit_updated(&self);
 }
 
 impl<T: IsA<StageWidget>> StageWidgetExt for T {
@@ -615,5 +626,17 @@ impl<T: IsA<StageWidget>> StageWidgetExt for T {
 
     fn emit_selection_changed(&self) {
         self.emit_by_name::<()>("selection-changed", &[self]);
+    }
+
+    fn connect_updated<F: Fn(&Self) + 'static>(&self, f: F) -> glib::SignalHandlerId {
+        self.connect_local("updated", false, move |values| {
+            let me = values[0].get::<Self>().unwrap();
+            f(&me);
+            None
+        })
+    }
+
+    fn emit_updated(&self) {
+        self.emit_by_name::<()>("updated", &[self]);
     }
 }

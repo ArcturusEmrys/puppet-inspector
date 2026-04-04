@@ -208,6 +208,30 @@ impl BindingPanelImp {
             }
         }
     }
+
+    /// Update all of the forms currently displayed.
+    fn update_forms(&self) {
+        let state = self.state.borrow();
+        let state = state.as_ref().unwrap();
+
+        if let Some(selection) = state.current_selection {
+            let document = state.document.lock().unwrap();
+            let puppet = document.stage().puppet(selection).unwrap();
+
+            let mut maybe_form = self.bindings_contents.first_child();
+            let mut binding_index = 0;
+            while let Some(widget) = maybe_form {
+                if let Some(form) = widget.downcast_ref::<BindingForm>() {
+                    form.set_value_in(puppet.bindings()[binding_index].1);
+                    form.set_value_out(puppet.bindings()[binding_index].2);
+
+                    binding_index += 1;
+                }
+
+                maybe_form = widget.next_sibling();
+            }
+        }
+    }
 }
 
 glib::wrapper! {
@@ -229,6 +253,15 @@ impl BindingPanel {
             move |_| {
                 if let Some(callback_self) = callback_self.upgrade() {
                     callback_self.imp().populate_list();
+                }
+            }
+        });
+
+        stage.connect_updated({
+            let callback_self = self.clone().downgrade();
+            move |_| {
+                if let Some(callback_self) = callback_self.upgrade() {
+                    callback_self.imp().update_forms();
                 }
             }
         });
