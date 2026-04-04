@@ -3,6 +3,7 @@ use gtk4::prelude::*;
 
 use ningyo_look_and_feel;
 
+mod bindings;
 mod document;
 mod io;
 mod panels;
@@ -41,6 +42,7 @@ fn main() -> glib::ExitCode {
             panels::PanelFrame::ensure_type();
             tracker::TrackerPanel::ensure_type();
             tracker::TrackerParamPanel::ensure_type();
+            bindings::BindingPanel::ensure_type();
 
             let window = window::WindowController::new(app, tracker_manager.clone());
 

@@ -38,6 +38,10 @@
                 <attribute name="label" translatable="yes">Tracker Parameters</attribute>
                 <attribute name="action">doc.panels-tracker-params</attribute>
             </item>
+            <item>
+                <attribute name="label" translatable="yes">Puppet Bindings</attribute>
+                <attribute name="action">doc.panels-bindings</attribute>
+            </item>
         </section>
         <section>
             <item>

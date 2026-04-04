@@ -11,6 +11,7 @@ use std::error::Error;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
+use crate::bindings::BindingPanel;
 use crate::document::model::Document;
 use crate::panels::PanelDock;
 use crate::panels::PanelFrame;
@@ -62,83 +63,108 @@ impl ObjectImpl for DocumentControllerImp {
 
         // Wire up document specific actions
         let doc = gio::SimpleActionGroup::new();
-
-        let doc_controller_import_puppet = self.obj().clone();
-        let doc_controller_panels_tracker = self.obj().clone();
-        let doc_controller_panels_tracker_params = self.obj().clone();
         doc.add_action_entries([
             gio::ActionEntry::builder("import-puppet")
-                .activate(move |_, _, _| {
-                    let callback_self = doc_controller_import_puppet.clone();
-                    doc_controller_import_puppet.imp().filepicker_puppet.open(
-                        doc_controller_import_puppet.window().as_ref(),
-                        Some(&gio::Cancellable::new()),
-                        move |file_or_error| {
-                            let maybe_error: Result<(), Box<dyn Error>> = (|| {
-                                callback_self.import_puppet(file_or_error?)?;
-                                Ok(())
-                            })(
-                            );
+                .activate({
+                    let callback_self = self.obj().clone();
+                    move |_, _, _| {
+                        let callback2_self = callback_self.clone();
+                        callback_self.imp().filepicker_puppet.open(
+                            callback_self.window().as_ref(),
+                            Some(&gio::Cancellable::new()),
+                            move |file_or_error| {
+                                let maybe_error: Result<(), Box<dyn Error>> = (|| {
+                                    callback2_self.import_puppet(file_or_error?)?;
+                                    Ok(())
+                                })(
+                                );
 
-                            if let Err(e) = maybe_error {
-                                eprintln!("{:?}", e);
-                            }
-                        },
-                    )
+                                if let Err(e) = maybe_error {
+                                    eprintln!("{:?}", e);
+                                }
+                            },
+                        )
+                    }
                 })
                 .build(),
             gio::ActionEntry::builder("panels-tracker")
                 .state(false.into())
-                .activate(move |_, action, _| {
-                    let panel_open: bool = action.state().unwrap().get().unwrap();
+                .activate({
+                    let callback_self = self.obj().clone();
+                    move |_, action, _| {
+                        let panel_open: bool = action.state().unwrap().get().unwrap();
 
-                    if !panel_open {
-                        let state = doc_controller_panels_tracker.imp().state.borrow();
-                        let tracker_manager = state.as_ref().unwrap().tracker_manager.clone();
-                        let document = state.as_ref().unwrap().document.clone();
-                        let builder = gtk4::Builder::from_resource(
-                            "/live/arcturus/ningyotsukai/tracker/panel_frame.ui",
-                        );
-                        let panel: PanelFrame = builder.object("panel").unwrap();
-                        let contents: TrackerPanel = builder.object("contents").unwrap();
+                        if !panel_open {
+                            let state = callback_self.imp().state.borrow();
+                            let tracker_manager = state.as_ref().unwrap().tracker_manager.clone();
+                            let document = state.as_ref().unwrap().document.clone();
+                            let builder = gtk4::Builder::from_resource(
+                                "/live/arcturus/ningyotsukai/tracker/panel_frame.ui",
+                            );
+                            let panel: PanelFrame = builder.object("panel").unwrap();
+                            let contents: TrackerPanel = builder.object("contents").unwrap();
 
-                        contents.bind(tracker_manager, document);
+                            contents.bind(tracker_manager, document);
 
-                        doc_controller_panels_tracker
-                            .imp()
-                            .new_panel_dock
-                            .append(&panel);
+                            callback_self.imp().new_panel_dock.append(&panel);
 
-                        action.set_state(&glib::Variant::from(!panel_open));
+                            action.set_state(&glib::Variant::from(!panel_open));
+                        }
+                        // TODO: Allow closing the panel from the menu item.
                     }
-                    // TODO: Allow closing the panel from the menu item.
                 })
                 .build(),
             gio::ActionEntry::builder("panels-tracker-params")
                 .state(false.into())
-                .activate(move |_, action, _| {
-                    let panel_open: bool = action.state().unwrap().get().unwrap();
+                .activate({
+                    let callback_self = self.obj().clone();
+                    move |_, action, _| {
+                        let panel_open: bool = action.state().unwrap().get().unwrap();
 
-                    if !panel_open {
-                        let state = doc_controller_panels_tracker_params.imp().state.borrow();
-                        let tracker_manager = state.as_ref().unwrap().tracker_manager.clone();
-                        let document = state.as_ref().unwrap().document.clone();
-                        let builder = gtk4::Builder::from_resource(
-                            "/live/arcturus/ningyotsukai/tracker/params/panel_frame.ui",
-                        );
-                        let panel: PanelFrame = builder.object("panel").unwrap();
-                        let contents: TrackerParamPanel = builder.object("contents").unwrap();
+                        if !panel_open {
+                            let state = callback_self.imp().state.borrow();
+                            let tracker_manager = state.as_ref().unwrap().tracker_manager.clone();
+                            let document = state.as_ref().unwrap().document.clone();
+                            let builder = gtk4::Builder::from_resource(
+                                "/live/arcturus/ningyotsukai/tracker/params/panel_frame.ui",
+                            );
+                            let panel: PanelFrame = builder.object("panel").unwrap();
+                            let contents: TrackerParamPanel = builder.object("contents").unwrap();
 
-                        contents.bind(tracker_manager, document);
+                            contents.bind(tracker_manager, document);
 
-                        doc_controller_panels_tracker_params
-                            .imp()
-                            .new_panel_dock
-                            .append(&panel);
+                            callback_self.imp().new_panel_dock.append(&panel);
 
-                        action.set_state(&glib::Variant::from(!panel_open));
+                            action.set_state(&glib::Variant::from(!panel_open));
+                        }
+                        // TODO: Allow closing the panel from the menu item.
                     }
-                    // TODO: Allow closing the panel from the menu item.
+                })
+                .build(),
+            gio::ActionEntry::builder("panels-bindings")
+                .state(false.into())
+                .activate({
+                    let callback_self = self.obj().clone();
+                    move |_, action, _| {
+                        let panel_open: bool = action.state().unwrap().get().unwrap();
+
+                        if !panel_open {
+                            let state = callback_self.imp().state.borrow();
+                            let document = state.as_ref().unwrap().document.clone();
+                            let builder = gtk4::Builder::from_resource(
+                                "/live/arcturus/ningyotsukai/bindings/panel_frame.ui",
+                            );
+                            let panel: PanelFrame = builder.object("panel").unwrap();
+                            let contents: BindingPanel = builder.object("contents").unwrap();
+
+                            contents.bind(document, callback_self.imp().stage.clone());
+
+                            callback_self.imp().new_panel_dock.append(&panel);
+
+                            action.set_state(&glib::Variant::from(!panel_open));
+                        }
+                        // TODO: Allow closing the panel from the menu item.
+                    }
                 })
                 .build(),
         ]);

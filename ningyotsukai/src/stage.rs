@@ -7,3 +7,4 @@ mod widget;
 pub use model::Puppet;
 pub use model::Stage;
 pub use widget::StageWidget;
+pub use widget::StageWidgetExt;

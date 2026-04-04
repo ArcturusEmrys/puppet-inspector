@@ -17,8 +17,6 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 struct State {
-    tracker_manager: Rc<TrackerManager>,
-
     document: Arc<Mutex<Document>>,
 
     pending_update: Option<glib::SourceId>,
@@ -155,13 +153,7 @@ impl ObjectImpl for TrackerParamPanelImp {
     }
 }
 
-impl WidgetImpl for TrackerParamPanelImp {
-    fn unrealize(&self) {
-        //We need to drop our tracker manager, otherwise we keep the application open
-        self.state.borrow_mut().take();
-        self.parent_unrealize();
-    }
-}
+impl WidgetImpl for TrackerParamPanelImp {}
 
 impl BoxImpl for TrackerParamPanelImp {}
 
@@ -232,7 +224,6 @@ impl TrackerParamPanel {
         });
 
         *self.imp().state.borrow_mut() = Some(State {
-            tracker_manager,
             document,
             pending_update: None,
         });

@@ -61,8 +61,8 @@ impl ObjectImpl for PuppetBoundsGizmoImp {
 
         let drag_end_self = self.obj().clone();
         drag.connect_drag_update(move |_, now_x, now_y| {
-            let mut state = drag_end_self.imp().state.borrow_mut();
-            let state = state.as_mut().unwrap();
+            let mut state_outer = drag_end_self.imp().state.borrow_mut();
+            let state = state_outer.as_mut().unwrap();
             let mut document = state.document.lock().unwrap();
             let index = state.puppet;
             let puppet = document.stage_mut().puppet_mut(index);
@@ -74,13 +74,12 @@ impl ObjectImpl for PuppetBoundsGizmoImp {
                 puppet.set_position(delta + rune);
             }
 
+            drop(document);
+            drop(state_outer);
+
             if let Some(stage) = drag_end_self.closest::<StageWidget>() {
                 stage.set_selected_puppet(Some(index));
-                // If I do this on the same stack the app hangs
-                glib::timeout_add_local(Duration::new(0, 0), move || {
-                    stage.puppet_updated();
-                    glib::ControlFlow::Break
-                });
+                stage.puppet_updated();
             }
         });
 

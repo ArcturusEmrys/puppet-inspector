@@ -17,5 +17,8 @@
         <file compressed="true" preprocess="xml-stripblanks">tracker/form.ui</file>
         <file compressed="true" preprocess="xml-stripblanks">tracker/params/panel.ui</file>
         <file compressed="true" preprocess="xml-stripblanks">tracker/params/panel_frame.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">bindings/panel.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">bindings/panel_frame.ui</file>
+        <file compressed="true" preprocess="xml-stripblanks">bindings/form.ui</file>
     </gresource>
 </gresources>

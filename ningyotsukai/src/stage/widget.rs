@@ -2,13 +2,13 @@ use glib;
 use graphene;
 use gtk4;
 
-use glib::subclass::InitializingObject;
+use glib::subclass::{InitializingObject, Signal, SignalType};
 use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
 
 use std::cell::{Cell, RefCell};
 use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use generational_arena::Index;
 
@@ -210,6 +210,17 @@ impl ObjectImpl for StageWidgetImp {
         if let Some(gizmo) = self.state.borrow_mut().border_gizmo.take() {
             gizmo.unparent();
         }
+    }
+
+    fn signals() -> &'static [glib::subclass::Signal] {
+        static SIGNALS: OnceLock<Vec<Signal>> = OnceLock::new();
+        SIGNALS.get_or_init(|| {
+            vec![
+                glib::subclass::Signal::builder("selection-changed")
+                    .param_types([SignalType::with_static_scope(StageWidget::static_type())])
+                    .build(),
+            ]
+        })
     }
 }
 
@@ -471,7 +482,7 @@ impl StageWidget {
         self.set_vexpand(true);
     }
 
-    /// Called by child gizmos whenever they change something with puppets.
+    /// Called by child gizmos whenever a puppet's bounds need to be updated.
     pub fn puppet_updated(&self) {
         let mut state = self.imp().state.borrow_mut();
         let document_arc = state.document.clone();
@@ -507,9 +518,13 @@ impl StageWidget {
         state.render_area.as_ref().unwrap().queue_render();
         self.queue_draw();
 
-        drop(state);
-
-        self.refresh_selection();
+        // NOTE: This is not actually a selection change, it's just there to
+        // force the resize gizmo to update.
+        //
+        // Hence why we don't call emit_selection_changed.
+        if let Some(resize) = state.selection_gizmo.as_ref() {
+            resize.selection_changed(&self, state.selected.iter(), &state.puppet_gizmos);
+        }
     }
 
     pub fn set_selected_puppet(&self, puppet: Option<Index>) {
@@ -523,6 +538,10 @@ impl StageWidget {
         if let Some(resize) = state.selection_gizmo.as_ref() {
             resize.selection_changed(&self, state.selected.iter(), &state.puppet_gizmos);
         }
+
+        drop(state);
+
+        self.emit_selection_changed();
     }
 
     pub fn set_selected_to_area(&self, rect: graphene::Rect) {
@@ -543,15 +562,10 @@ impl StageWidget {
         if let Some(resize) = state.selection_gizmo.as_ref() {
             resize.selection_changed(&self, state.selected.iter(), &state.puppet_gizmos);
         }
-    }
 
-    /// Called by child gizmos whenever they need to re-measure selections.
-    pub fn refresh_selection(&self) {
-        let state = self.imp().state.borrow_mut();
+        drop(state);
 
-        if let Some(resize) = state.selection_gizmo.as_ref() {
-            resize.selection_changed(&self, state.selected.iter(), &state.puppet_gizmos);
-        }
+        self.emit_selection_changed();
     }
 
     /// Given a point on the stage (or off of it), calculate where it should
@@ -575,5 +589,31 @@ impl StageWidget {
         let scale = 10.0_f64.powf(self.imp().zadjustment.borrow().as_ref().unwrap().value()) as f32;
 
         Vec2::new(point.x / scale + viewport_x, point.y / scale + viewport_y)
+    }
+
+    pub fn selection(&self) -> HashSet<Index> {
+        let state = self.imp().state.borrow_mut();
+
+        state.selected.clone()
+    }
+}
+
+pub trait StageWidgetExt {
+    fn connect_selection_changed<F: Fn(&Self) + 'static>(&self, f: F) -> glib::SignalHandlerId;
+
+    fn emit_selection_changed(&self);
+}
+
+impl<T: IsA<StageWidget>> StageWidgetExt for T {
+    fn connect_selection_changed<F: Fn(&Self) + 'static>(&self, f: F) -> glib::SignalHandlerId {
+        self.connect_local("selection-changed", false, move |values| {
+            let me = values[0].get::<Self>().unwrap();
+            f(&me);
+            None
+        })
+    }
+
+    fn emit_selection_changed(&self) {
+        self.emit_by_name::<()>("selection-changed", &[self]);
     }
 }
