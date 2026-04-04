@@ -36,6 +36,12 @@ pub struct BindingFormImp {
     #[template_child]
     value_invert_check: gtk4::TemplateChild<gtk4::CheckButton>,
 
+    /// Un-normalized range (min, value, max) of in value
+    value_in: RefCell<(f32, f32, f32)>,
+
+    /// Un-normalized range (min, value, max) of out value
+    value_out: RefCell<(f32, f32, f32)>,
+
     #[property(name="binding-name", get=Self::binding_name, set=Self::set_binding_name)]
     _synths_string: RefCell<String>,
 
@@ -44,6 +50,8 @@ pub struct BindingFormImp {
     #[property(name="value-in-to", get=Self::value_in_to, set=Self::set_value_in_to)]
     #[property(name="value-out-from", get=Self::value_out_from, set=Self::set_value_out_from)]
     #[property(name="value-out-to", get=Self::value_out_to, set=Self::set_value_out_to)]
+    #[property(name="value-in", get=Self::value_in, set=Self::set_value_in)]
+    #[property(name="value-out", get=Self::value_out, set=Self::set_value_out)]
     _synths_float: RefCell<f32>,
 
     #[property(name="inverse", get=Self::inverse, set=Self::set_inverse)]
@@ -113,6 +121,53 @@ impl ObjectImpl for BindingFormImp {
             notify_value_out_to
         );
         export_notify!(self, value_invert_check, connect_activate, notify_inverse);
+
+        // TODO: These treat the GtkEntry as source of truth for in and out.
+        // Can we do better?
+        self.obj().connect_value_in_from_notify(|form| {
+            let mut value = form.imp().value_in.borrow_mut();
+
+            value.0 = form.value_in_from();
+            form.imp()
+                .update_level_bar(*value, &form.imp().value_in_display);
+        });
+
+        self.obj().connect_value_in_to_notify(|form| {
+            let mut value = form.imp().value_in.borrow_mut();
+
+            value.2 = form.value_in_to();
+            form.imp()
+                .update_level_bar(*value, &form.imp().value_in_display);
+        });
+
+        self.obj().connect_value_out_from_notify(|form| {
+            let mut value = form.imp().value_out.borrow_mut();
+
+            value.0 = form.value_out_from();
+            form.imp()
+                .update_level_bar(*value, &form.imp().value_out_display);
+        });
+
+        self.obj().connect_value_out_to_notify(|form| {
+            let mut value = form.imp().value_out.borrow_mut();
+
+            value.2 = form.value_out_to();
+            form.imp()
+                .update_level_bar(*value, &form.imp().value_out_display);
+        });
+
+        export_notify!(
+            self,
+            value_in_display,
+            connect_value_notify,
+            notify_value_in
+        );
+        export_notify!(
+            self,
+            value_out_display,
+            connect_value_notify,
+            notify_value_out
+        );
     }
 }
 
@@ -153,6 +208,46 @@ impl BindingFormImp {
 
     fn set_inverse(&self, value: bool) {
         self.value_invert_check.set_active(value);
+    }
+
+    fn value_in(&self) -> f32 {
+        self.value_in.borrow().1
+    }
+
+    fn set_value_in(&self, value: f32) {
+        self.value_in.borrow_mut().1 = value;
+        self.update_level_bar(*self.value_in.borrow(), &self.value_in_display);
+    }
+
+    fn value_out(&self) -> f32 {
+        self.value_out.borrow().1
+    }
+
+    fn set_value_out(&self, value: f32) {
+        self.value_out.borrow_mut().1 = value;
+        self.update_level_bar(*self.value_out.borrow(), &self.value_out_display);
+    }
+
+    fn update_level_bar(&self, range: (f32, f32, f32), target: &gtk4::LevelBar) {
+        let (in_min, in_value, in_max) = range;
+        let in_is_inverse = in_min > in_max;
+
+        let normal_max = if in_is_inverse {
+            in_min - in_max
+        } else {
+            in_max - in_min
+        };
+
+        let normal_value = if in_is_inverse {
+            in_max - in_value
+        } else {
+            in_min - in_value
+        };
+
+        target.set_min_value(0.0);
+        target.set_max_value(normal_max as f64);
+        target.set_value(normal_value as f64);
+        target.set_inverted(in_is_inverse);
     }
 }
 

@@ -65,7 +65,7 @@ impl BindingPanelImp {
 
         if let Some(select) = state.current_selection {
             if let Some(puppet) = document.stage_mut().puppet_mut(select) {
-                if let Some(binding) = puppet.bindings_mut().get_mut(binding_index) {
+                if let Some((binding, _in, _out)) = puppet.bindings_mut().get_mut(binding_index) {
                     f(binding)
                 }
             }
@@ -97,7 +97,9 @@ impl BindingPanelImp {
 
         if let Some(index) = new_selection {
             if let Some(puppet) = document.stage().puppet(index) {
-                for (binding_index, binding) in puppet.bindings().iter().enumerate() {
+                for (binding_index, (binding, in_value, out_value)) in
+                    puppet.bindings().iter().enumerate()
+                {
                     let form = BindingForm::new();
 
                     form.set_binding_name(binding.name.escape_nulls());
@@ -110,6 +112,9 @@ impl BindingPanelImp {
                         form.set_value_out_to(ratio.out_range.y);
                         form.set_inverse(ratio.inverse);
                     }
+
+                    form.set_value_in(in_value);
+                    form.set_value_out(out_value);
 
                     macro_rules! bind_float_property {
                         ($notify_signal:ident, $form_prop:ident, $binding_index:ident, |$value:ident, $binding:ident| $code:block) => {

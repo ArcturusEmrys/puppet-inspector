@@ -43,7 +43,10 @@ pub struct Puppet {
     /// Binding data configuration for this puppet.
     ///
     /// Defines the rules by which incoming tracker data drives the puppet.
-    bindings: Vec<Binding>,
+    ///
+    /// The additional two parameters indicate the last processed input and
+    /// output for the binding.
+    bindings: Vec<(Binding, f32, f32)>,
 
     /// Index of param UUIDs to strings.
     param_uuid_index: HashMap<ParamUuid, String>,
@@ -55,7 +58,11 @@ pub struct Puppet {
 impl Puppet {
     pub fn open(file: impl Read) -> Result<Self, Box<dyn Error>> {
         let (puppet_json, textures, vendors) = parse_inp_parts(file)?;
-        let bindings = parse_bindings(&vendors).unwrap_or_else(|| vec![]);
+        let bindings = parse_bindings(&vendors)
+            .unwrap_or_else(|| vec![])
+            .into_iter()
+            .map(|binding| (binding, 0.0, 0.0))
+            .collect();
         let puppet_data = InoxPuppet::new_from_json(&puppet_json)?;
         let model = Model {
             puppet: puppet_data,
@@ -135,11 +142,11 @@ impl Puppet {
         self.model.puppet.params().get(name)
     }
 
-    pub fn bindings(&self) -> &[Binding] {
+    pub fn bindings(&self) -> &[(Binding, f32, f32)] {
         &self.bindings.as_slice()
     }
 
-    pub fn bindings_mut(&mut self) -> &mut [Binding] {
+    pub fn bindings_mut(&mut self) -> &mut [(Binding, f32, f32)] {
         self.bindings.as_mut_slice()
     }
 
@@ -153,11 +160,15 @@ impl Puppet {
 
         if let Some(data) = &self.last_tracker_data {
             if data.facefound() {
-                for binding in self.bindings.iter() {
+                for (binding, bind_in_value, bind_out_value) in self.bindings.iter_mut() {
                     let in_value = data.value(&binding.source_name, &binding.source_type);
 
                     if let Some(in_value) = in_value {
                         let out_value = binding.eval(in_value as f32);
+
+                        *bind_in_value = in_value as f32;
+                        *bind_out_value = out_value;
+
                         if let Some(param_name) = self.param_uuid_index.get(&binding.param) {
                             let mut orig = self
                                 .model
