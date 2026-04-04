@@ -230,6 +230,12 @@ impl BindingFormImp {
 
     fn update_level_bar(&self, range: (f32, f32, f32), target: &gtk4::LevelBar) {
         let (in_min, in_value, in_max) = range;
+
+        // Do not attempt to update the level bar if the range has not yet been configured.
+        if in_min.is_nan() || in_value.is_nan() || in_max.is_nan() {
+            return;
+        }
+
         let in_is_inverse = in_min > in_max;
 
         let normal_max = if in_is_inverse {
@@ -238,11 +244,15 @@ impl BindingFormImp {
             in_max - in_min
         };
 
-        let normal_value = if in_is_inverse {
-            in_max - in_value
+        let mut normal_value = if in_is_inverse {
+            in_value - in_max
         } else {
-            in_min - in_value
+            in_value - in_min
         };
+
+        if normal_value < 0.0 {
+            normal_value = 0.0;
+        }
 
         target.set_min_value(0.0);
         target.set_max_value(normal_max as f64);
