@@ -37,6 +37,8 @@ pub struct BindingFormImp {
     value_invert_check: gtk4::TemplateChild<gtk4::CheckButton>,
     #[template_child]
     expression_entry: gtk4::TemplateChild<gtk4::Entry>,
+    #[template_child]
+    expression_error_label: gtk4::TemplateChild<gtk4::Label>,
 
     /// Un-normalized range (min, value, max) of in value
     value_in: RefCell<(f32, f32, f32)>,
@@ -46,6 +48,7 @@ pub struct BindingFormImp {
 
     #[property(name="binding-name", get=Self::binding_name, set=Self::set_binding_name)]
     #[property(name="expression", get=Self::expression, set=Self::set_expression)]
+    #[property(name="expression-error", get=Self::expression_error, set=Self::set_expression_error)]
     _synths_string: RefCell<String>,
 
     #[property(name="dampen-level", get=Self::dampen_level, set=Self::set_dampen_level)]
@@ -243,6 +246,14 @@ impl BindingFormImp {
 
     fn set_expression(&self, value: String) {
         self.expression_entry.buffer().set_text(value);
+    }
+
+    fn expression_error(&self) -> String {
+        self.expression_error_label.label().into()
+    }
+
+    fn set_expression_error(&self, value: String) {
+        self.expression_error_label.set_label(&value);
     }
 
     /// Set the target level bar to display the range (min, value, max).

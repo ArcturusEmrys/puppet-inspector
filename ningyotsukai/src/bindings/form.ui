@@ -179,6 +179,17 @@
                                 </layout>
                             </object>
                         </child>
+                        <child>
+                            <object class="GtkLabel" id="expression_error_label">
+                                <property name="xalign">0.0</property>
+                                <property name="label">Expression</property>
+                                <layout>
+                                    <property name="column">0</property>
+                                    <property name="column-span">3</property>
+                                    <property name="row">9</property>
+                                </layout>
+                            </object>
+                        </child>
                     </object>
                 </property>
             </object>

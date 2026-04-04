@@ -65,7 +65,9 @@ impl BindingPanelImp {
 
         if let Some(select) = state.current_selection {
             if let Some(puppet) = document.stage_mut().puppet_mut(select) {
-                if let Some((binding, _in, _out)) = puppet.bindings_mut().get_mut(binding_index) {
+                if let Some((binding, _in, _out, _error)) =
+                    puppet.bindings_mut().get_mut(binding_index)
+                {
                     f(binding)
                 }
             }
@@ -97,7 +99,7 @@ impl BindingPanelImp {
 
         if let Some(index) = new_selection {
             if let Some(puppet) = document.stage().puppet(index) {
-                for (binding_index, (binding, in_value, out_value)) in
+                for (binding_index, (binding, in_value, out_value, last_error)) in
                     puppet.bindings().iter().enumerate()
                 {
                     let form = BindingForm::new();
@@ -115,6 +117,10 @@ impl BindingPanelImp {
                         }
                         BindingType::Expression(expr) => {
                             form.set_expression(expr.as_str());
+
+                            if let Some(last_error) = last_error {
+                                form.set_expression_error(last_error.to_string());
+                            }
                         }
                     }
 
@@ -252,6 +258,10 @@ impl BindingPanelImp {
                 if let Some(form) = widget.downcast_ref::<BindingForm>() {
                     form.set_value_in(puppet.bindings()[binding_index].1);
                     form.set_value_out(puppet.bindings()[binding_index].2);
+
+                    if let Some(last_error) = &puppet.bindings()[binding_index].3 {
+                        form.set_expression_error(last_error.to_string());
+                    }
 
                     binding_index += 1;
                 }

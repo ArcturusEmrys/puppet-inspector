@@ -24,6 +24,7 @@ ningyo-look-and-feel = { path = "../ningyo-look-and-feel" }
 ningyo-extensions = { path = "../ningyo-extensions" }
 ningyo-binding = { path = "../ningyo-binding" }
 renderdoc = { version = "0.12.1", optional = true }
+mlua = { version = "0.11.6", features = ["send"] }
 
 [target.'cfg(not(windows))'.dependencies]
 gtk4 = { version = "0.11.0", features = ["v4_10"] }

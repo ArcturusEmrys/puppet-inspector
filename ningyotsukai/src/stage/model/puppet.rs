@@ -11,6 +11,7 @@ use std::error::Error;
 use std::io::Read;
 
 use glam::Vec2;
+use mlua::Error as LuaError;
 
 use ningyo_binding::tracker::TrackerPacket;
 use ningyo_binding::{Binding, ExpressionEval, parse_bindings};
@@ -46,7 +47,7 @@ pub struct Puppet {
     ///
     /// The additional two parameters indicate the last processed input and
     /// output for the binding.
-    bindings: Vec<(Binding, f32, f32)>,
+    bindings: Vec<(Binding, f32, f32, Option<LuaError>)>,
 
     /// Index of param UUIDs to strings.
     param_uuid_index: HashMap<ParamUuid, String>,
@@ -61,7 +62,7 @@ impl Puppet {
         let bindings = parse_bindings(&vendors)
             .unwrap_or_else(|| vec![])
             .into_iter()
-            .map(|binding| (binding, 0.0, 0.0))
+            .map(|binding| (binding, 0.0, 0.0, None))
             .collect();
         let puppet_data = InoxPuppet::new_from_json(&puppet_json)?;
         let model = Model {
@@ -142,11 +143,11 @@ impl Puppet {
         self.model.puppet.params().get(name)
     }
 
-    pub fn bindings(&self) -> &[(Binding, f32, f32)] {
+    pub fn bindings(&self) -> &[(Binding, f32, f32, Option<LuaError>)] {
         &self.bindings.as_slice()
     }
 
-    pub fn bindings_mut(&mut self) -> &mut [(Binding, f32, f32)] {
+    pub fn bindings_mut(&mut self) -> &mut [(Binding, f32, f32, Option<LuaError>)] {
         self.bindings.as_mut_slice()
     }
 
@@ -158,11 +159,12 @@ impl Puppet {
             self.model.puppet.begin_frame();
         }
 
-        for (binding, bind_in_value, bind_out_value) in self.bindings.iter_mut() {
+        for (binding, bind_in_value, bind_out_value, bind_last_error) in self.bindings.iter_mut() {
             match binding.eval(&self.expression_eval) {
                 Ok((in_value, Some(out_value))) => {
                     *bind_in_value = in_value.unwrap_or(*bind_in_value);
                     *bind_out_value = out_value;
+                    *bind_last_error = None;
 
                     if let Some(param_name) = self.param_uuid_index.get(&binding.param) {
                         let mut orig = self
@@ -189,7 +191,7 @@ impl Puppet {
                 Ok((_, None)) => {}
 
                 //Lua error during evaluation
-                Err(e) => {}
+                Err(e) => *bind_last_error = Some(e),
             }
         }
 
