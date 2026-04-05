@@ -518,6 +518,7 @@ impl<'a, 'window> DrawSession<'a> for WgpuDrawSession<'a, 'window> {
 				//TODO: What happens if a mask is also masked?
 				let pipeline = self.render.part_mask_pipeline.with_configuration(
 					&self.render.device,
+					[color_attachments[0].as_ref().map(|ca| ca.view.texture().format())],
 					[blend],
 					[wgpu::ColorWrites::empty()],
 					Some(self.render.mask_depthstencil.clone()),
@@ -546,9 +547,15 @@ impl<'a, 'window> DrawSession<'a> for WgpuDrawSession<'a, 'window> {
 			} else {
 				let all = wgpu::ColorWrites::ALL;
 				//Regular parts
+				let formats = [
+					color_attachments[0].as_ref().map(|ca| ca.view.texture().format()),
+					color_attachments[1].as_ref().map(|ca| ca.view.texture().format()),
+					color_attachments[2].as_ref().map(|ca| ca.view.texture().format()),
+				];
 				let pipeline = if self.render.is_in_mask {
 					self.render.part_pipeline.with_configuration(
 						&self.render.device,
+						formats,
 						[blend, blend, blend],
 						[all, all, all],
 						Some(self.render.masked_depthstencil.clone()),
@@ -556,6 +563,7 @@ impl<'a, 'window> DrawSession<'a> for WgpuDrawSession<'a, 'window> {
 				} else {
 					self.render.part_pipeline.with_configuration(
 						&self.render.device,
+						formats,
 						[blend, blend, blend],
 						[all, all, all],
 						None,
@@ -632,17 +640,18 @@ impl<'a, 'window> DrawSession<'a> for WgpuDrawSession<'a, 'window> {
 			//TODO: Do we even want blending on in Normal mode?
 			let blend = Some(Self::blend_mode_to_state(components.drawable.blending.mode));
 
+			let color_attachments = [Some(wgpu::RenderPassColorAttachment {
+				view: &surface_color_view,
+				depth_slice: None,
+				resolve_target: None,
+				ops: wgpu::Operations {
+					load: wgpu::LoadOp::Load,
+					store: wgpu::StoreOp::Store,
+				},
+			})];
 			let mut render_pass = self.encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
 				label: Some("WgpuRenderer Composite deferred pass"),
-				color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-					view: &surface_color_view,
-					depth_slice: None,
-					resolve_target: None,
-					ops: wgpu::Operations {
-						load: wgpu::LoadOp::Load,
-						store: wgpu::StoreOp::Store,
-					},
-				})],
+				color_attachments: &color_attachments,
 				depth_stencil_attachment,
 				occlusion_query_set: None,
 				timestamp_writes: None,
@@ -660,8 +669,14 @@ impl<'a, 'window> DrawSession<'a> for WgpuDrawSession<'a, 'window> {
 				} else {
 					None
 				};
+				let formats = [
+					color_attachments[0].as_ref().map(|ca| ca.view.texture().format()),
+					None,
+					None,
+				];
 				let pipeline = self.render.composite_pipeline.with_configuration(
 					&self.render.device,
+					formats,
 					[blend, blend, blend],
 					[all, all, all],
 					depth_stencil,

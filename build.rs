@@ -457,7 +457,7 @@ fn gen_vertexshader_trait_methods(
 	struct_name: &str,
 ) -> Result<(), Box<dyn Error>> {
 	writeln!(out, "impl shader::VertexShader for {} {{", struct_name)?;
-	writeln!(out, "    fn as_vertex_state(&self) -> wgpu::VertexState {{")?;
+	writeln!(out, "    fn as_vertex_state<'a>(&'a self) -> wgpu::VertexState<'a> {{")?;
 	writeln!(out, "        wgpu::VertexState {{")?;
 	writeln!(out, "            module: &self.{},", entrypoint.name)?;
 	writeln!(out, "            entry_point: Some(\"{}\"),", entrypoint.name)?;
@@ -525,68 +525,78 @@ fn gen_fragmentshader_trait_methods(
 		"    type TargetArray<T: Eq + std::hash::Hash + Clone> = [T; {}];",
 		entrypoint.output_variables.len()
 	)?;
-	writeln!(out)?;
-	writeln!(out, "    fn as_fragment_state(&self) -> wgpu::FragmentState {{")?;
-	writeln!(out, "        wgpu::FragmentState {{")?;
-	writeln!(out, "            module: &self.{},", entrypoint.name)?;
-	writeln!(out, "            entry_point: Some(\"{}\"),", entrypoint.name)?;
-	writeln!(out, "            targets: &[")?;
+	writeln!(
+		out,
+		"    fn preferred_color_targets(&self) -> Self::TargetArray<Option<wgpu::ColorTargetState>> {{"
+	)?;
+
+	writeln!(out, "        [")?;
 	for var in &entrypoint.output_variables {
-		writeln!(out, "                Some(wgpu::ColorTargetState {{")?;
+		writeln!(out, "            Some(wgpu::ColorTargetState {{")?;
 		match var.format {
 			ReflectFormat::Undefined => {
-				writeln!(out, "                    format: //Unknown!")?;
+				writeln!(out, "                format: //Unknown!")?;
 			}
 			ReflectFormat::R32_UINT => {
-				writeln!(out, "                    format: wgpu::TextureFormat::R32Uint,")?;
+				writeln!(out, "                format: wgpu::TextureFormat::R32Uint,")?;
 			}
 			ReflectFormat::R32_SINT => {
-				writeln!(out, "                    format: wgpu::TextureFormat::R32Sint,")?;
+				writeln!(out, "                format: wgpu::TextureFormat::R32Sint,")?;
 			}
 			ReflectFormat::R32_SFLOAT => {
-				writeln!(out, "                    format: wgpu::TextureFormat::R32Float,")?;
+				writeln!(out, "                format: wgpu::TextureFormat::R32Float,")?;
 			}
 			ReflectFormat::R32G32_UINT => {
-				writeln!(out, "                    format: wgpu::TextureFormat::Rg32Uint,")?;
+				writeln!(out, "                format: wgpu::TextureFormat::Rg32Uint,")?;
 			}
 			ReflectFormat::R32G32_SINT => {
-				writeln!(out, "                    format: wgpu::TextureFormat::Rg32Sint,")?;
+				writeln!(out, "                format: wgpu::TextureFormat::Rg32Sint,")?;
 			}
 			ReflectFormat::R32G32_SFLOAT => {
-				writeln!(out, "                    format: wgpu::TextureFormat::Rg32Float,")?;
+				writeln!(out, "                format: wgpu::TextureFormat::Rg32Float,")?;
 			}
 
 			// WARN: These don't actually exist in WGPU!
 			ReflectFormat::R32G32B32_UINT => {
-				writeln!(out, "                    format: //wgpu::TextureFormat::Rgb32Uint,")?;
+				writeln!(out, "                format: //wgpu::TextureFormat::Rgb32Uint,")?;
 			}
 			ReflectFormat::R32G32B32_SINT => {
-				writeln!(out, "                    format: //wgpu::TextureFormat::Rgb32Sint,")?;
+				writeln!(out, "                format: //wgpu::TextureFormat::Rgb32Sint,")?;
 			}
 			ReflectFormat::R32G32B32_SFLOAT => {
-				writeln!(out, "                    format: //wgpu::TextureFormat::Rgb32Float,")?;
+				writeln!(out, "                format: //wgpu::TextureFormat::Rgb32Float,")?;
 			}
 
 			ReflectFormat::R32G32B32A32_UINT => {
-				writeln!(out, "                    format: wgpu::TextureFormat::Rgba32Uint,")?;
+				writeln!(out, "                format: wgpu::TextureFormat::Rgba32Uint,")?;
 			}
 			ReflectFormat::R32G32B32A32_SINT => {
-				writeln!(out, "                    format: wgpu::TextureFormat::Rgba32Sint,")?;
+				writeln!(out, "                format: wgpu::TextureFormat::Rgba32Sint,")?;
 			}
 			ReflectFormat::R32G32B32A32_SFLOAT => {
-				writeln!(out, "                    format: wgpu::TextureFormat::Rgba32Float,")?;
+				writeln!(out, "                format: wgpu::TextureFormat::Rgba32Float,")?;
 			}
 		}
 
 		// NOTE: This method CANNOT have a blendstate param as self-borrowed
 		// values are one of Rust's inconceivable types.
 		// See: https://blog.polybdenum.com/2024/06/07/the-inconceivable-types-of-rust-how-to-make-self-borrows-safe.html
-		writeln!(out, "                    blend: None,")?;
-		writeln!(out, "                    write_mask: wgpu::ColorWrites::ALL,")?;
+		writeln!(out, "                blend: None,")?;
+		writeln!(out, "                write_mask: wgpu::ColorWrites::ALL,")?;
 
-		writeln!(out, "                }}),")?;
+		writeln!(out, "            }}),")?;
 	}
-	writeln!(out, "            ],")?;
+	writeln!(out, "        ]")?;
+	writeln!(out, "    }}")?;
+	writeln!(out)?;
+	writeln!(
+		out,
+		"    fn as_fragment_state<'a>(&'a self, targets: &'a [Option<wgpu::ColorTargetState>]) -> wgpu::FragmentState<'a> {{"
+	)?;
+	writeln!(out, "        wgpu::FragmentState {{")?;
+	writeln!(out, "            module: &self.{},", entrypoint.name)?;
+	writeln!(out, "            entry_point: Some(\"{}\"),", entrypoint.name)?;
+	writeln!(out, "            targets,")?;
 	writeln!(
 		out,
 		"            compilation_options: wgpu::PipelineCompilationOptions::default()"
@@ -618,7 +628,8 @@ fn introspect_spirv(
 	filepath: &str,
 	module: &spirv_reflect::ShaderModule,
 ) -> Result<(), Box<dyn Error>> {
-	writeln!(out, "/// Automatically generated introspection data for {}", filename)?;
+	writeln!(out, "//! Automatically generated introspection data for {}", filename)?;
+	writeln!(out, "#![allow(unused)]")?;
 
 	writeln!(out, "use wgpu;")?;
 	writeln!(out, "use wgpu::include_spirv;")?;

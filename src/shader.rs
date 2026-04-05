@@ -10,20 +10,22 @@ pub trait Shader: Clone {
 }
 
 pub trait VertexShader: Shader {
-	fn as_vertex_state(&self) -> wgpu::VertexState;
+	fn as_vertex_state<'a>(&'a self) -> wgpu::VertexState<'a>;
 }
 
 pub trait FragmentShader: Shader {
-	type TargetArray<T: Eq + Hash + Clone>: IntoIterator<Item = T> + Eq + Hash + Clone;
+	type TargetArray<T: Eq + Hash + Clone>: IntoIterator<Item = T> + Eq + Hash + Clone + AsRef<[T]> + AsMut<[T]>;
 
-	fn as_fragment_state(&self) -> wgpu::FragmentState;
+	fn preferred_color_targets(&self) -> Self::TargetArray<Option<wgpu::ColorTargetState>>;
+
+	fn as_fragment_state<'a>(&'a self, color_targets: &'a [Option<wgpu::ColorTargetState>]) -> wgpu::FragmentState<'a>;
 }
 
-pub trait UniformBlock<const Size: usize> {
-	fn write_buffer(&self, out: &mut [u8; Size]);
+pub trait UniformBlock<const SIZE: usize> {
+	fn write_buffer(&self, out: &mut [u8; SIZE]);
 
 	fn into_buffer(&self, device: &wgpu::Device) -> wgpu::Buffer {
-		let mut contents = [0; Size];
+		let mut contents = [0; SIZE];
 		self.write_buffer(&mut contents);
 
 		device.create_buffer_init(&wgpu::util::BufferInitDescriptor {

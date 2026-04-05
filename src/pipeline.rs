@@ -23,6 +23,7 @@ where
 		device: &wgpu::Device,
 		vert: &V,
 		frag: &F,
+		formats: F::TargetArray<Option<wgpu::TextureFormat>>,
 		blend: F::TargetArray<Option<wgpu::BlendState>>,
 		write_mask: F::TargetArray<wgpu::ColorWrites>,
 		depth_stencil: Option<wgpu::DepthStencilState>,
@@ -36,19 +37,26 @@ where
 			immediate_size: 0,
 		});
 
-		let mut fragment = frag.as_fragment_state();
-		let mut fragment_targets = fragment.targets.to_owned();
-		for (index, (blend, write_mask)) in blend.into_iter().zip(write_mask.into_iter()).enumerate() {
-			fragment_targets[index]
+		let mut fragment_targets = frag.preferred_color_targets();
+		for (index, (format, (blend, write_mask))) in formats
+			.into_iter()
+			.zip(blend.into_iter().zip(write_mask.into_iter()))
+			.enumerate()
+		{
+			let target = fragment_targets.as_mut()[index]
 				.as_mut()
-				.expect("FragmentShader should require as many blend states as it creates targets")
-				.blend = blend;
-			fragment_targets[index]
-				.as_mut()
-				.expect("FragmentShader should require as many blend states as it creates targets")
-				.write_mask = write_mask;
+				.expect("Excess color attachment options were provided to the pipeline constructor");
+			if let Some(format) = format {
+				target.format = format;
+				target.blend = blend;
+				target.write_mask = write_mask;
+			} else {
+				//Format NONE means the color target wasn't provided, so erase it.
+				fragment_targets.as_mut()[index] = None;
+			}
 		}
-		fragment.targets = &fragment_targets;
+
+		let fragment = frag.as_fragment_state(&fragment_targets.as_ref());
 
 		Self {
 			pipeline: device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -104,6 +112,7 @@ where
 	frag: F,
 	cache: HashMap<
 		(
+			F::TargetArray<Option<wgpu::TextureFormat>>,
 			F::TargetArray<Option<wgpu::BlendState>>,
 			F::TargetArray<wgpu::ColorWrites>,
 			Option<wgpu::DepthStencilState>,
@@ -128,17 +137,19 @@ where
 	pub fn with_configuration(
 		&mut self,
 		device: &wgpu::Device,
+		formats: F::TargetArray<Option<wgpu::TextureFormat>>,
 		blend: F::TargetArray<Option<wgpu::BlendState>>,
 		write_mask: F::TargetArray<wgpu::ColorWrites>,
 		depth_stencil: Option<wgpu::DepthStencilState>,
 	) -> &Pipeline<V, F> {
 		self.cache
-			.entry((blend, write_mask, depth_stencil))
-			.or_insert_with_key(|(blend, write_mask, depth_stencil)| {
+			.entry((formats, blend, write_mask, depth_stencil))
+			.or_insert_with_key(|(formats, blend, write_mask, depth_stencil)| {
 				Pipeline::new(
 					device,
 					&self.vert,
 					&self.frag,
+					formats.clone(),
 					blend.clone(),
 					write_mask.clone(),
 					depth_stencil.clone(),
