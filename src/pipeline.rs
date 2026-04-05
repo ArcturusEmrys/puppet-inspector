@@ -68,7 +68,7 @@ where
 					topology: wgpu::PrimitiveTopology::TriangleList,
 					strip_index_format: None,
 					front_face: wgpu::FrontFace::Ccw,
-					cull_mode: Some(wgpu::Face::Back), //TODO: I'm pretty sure the GL renderer doesn't do this
+					cull_mode: None,
 					..Default::default()
 				},
 				depth_stencil,
