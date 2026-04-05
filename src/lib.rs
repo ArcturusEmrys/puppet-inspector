@@ -664,7 +664,8 @@ impl<'a, 'window> DrawSession<'a> for WgpuDrawSession<'a, 'window> {
 			//TODO: Do we even want blending on in Normal mode?
 			let blend = Some(Self::blend_mode_to_state(components.drawable.blending.mode));
 
-			let color_attachments = [Some(wgpu::RenderPassColorAttachment {
+			let color_attachments = [
+				Some(wgpu::RenderPassColorAttachment {
 				view: &surface_color_view,
 				depth_slice: None,
 				resolve_target: None,
@@ -672,7 +673,10 @@ impl<'a, 'window> DrawSession<'a> for WgpuDrawSession<'a, 'window> {
 					load: wgpu::LoadOp::Load,
 					store: wgpu::StoreOp::Store,
 				},
-			})];
+				}),
+				None,
+				None,
+			];
 			let mut render_pass = self.encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
 				label: Some(&format!(
 					"WgpuRenderer::finish_composite_content - {}",
