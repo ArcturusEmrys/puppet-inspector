@@ -2,6 +2,7 @@
 <interface>
     <object class="NGTPanelFrame" id="panel">
         <property name="name">Bindings</property>
+        <property name="associated-action">doc.panels-bindings</property>
         <child>
             <object class="NGTBindingPanel" id="contents">
             </object>

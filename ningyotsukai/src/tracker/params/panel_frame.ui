@@ -2,6 +2,7 @@
 <interface>
     <object class="NGTPanelFrame" id="panel">
         <property name="name">Parameters</property>
+        <property name="associated-action">doc.panels-tracker-params</property>
         <child>
             <object class="NGTTrackerParamPanel" id="contents">
             </object>

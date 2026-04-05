@@ -107,10 +107,15 @@ impl ObjectImpl for DocumentControllerImp {
                             contents.bind(tracker_manager, document);
 
                             callback_self.imp().new_panel_dock.append(&panel);
-
-                            action.set_state(&glib::Variant::from(!panel_open));
+                        } else {
+                            for panel_frame in callback_self.find_all::<PanelFrame>() {
+                                if panel_frame.remove_page_by_action("doc.panels-tracker") {
+                                    break;
+                                }
+                            }
                         }
-                        // TODO: Allow closing the panel from the menu item.
+
+                        action.set_state(&glib::Variant::from(!panel_open));
                     }
                 })
                 .build(),
@@ -134,10 +139,15 @@ impl ObjectImpl for DocumentControllerImp {
                             contents.bind(tracker_manager, document);
 
                             callback_self.imp().new_panel_dock.append(&panel);
-
-                            action.set_state(&glib::Variant::from(!panel_open));
+                        } else {
+                            for panel_frame in callback_self.find_all::<PanelFrame>() {
+                                if panel_frame.remove_page_by_action("doc.panels-tracker-params") {
+                                    break;
+                                }
+                            }
                         }
-                        // TODO: Allow closing the panel from the menu item.
+
+                        action.set_state(&glib::Variant::from(!panel_open));
                     }
                 })
                 .build(),
@@ -160,10 +170,15 @@ impl ObjectImpl for DocumentControllerImp {
                             contents.bind(document, callback_self.imp().stage.clone());
 
                             callback_self.imp().new_panel_dock.append(&panel);
-
-                            action.set_state(&glib::Variant::from(!panel_open));
+                        } else {
+                            for panel_frame in callback_self.find_all::<PanelFrame>() {
+                                if panel_frame.remove_page_by_action("doc.panels-bindings") {
+                                    break;
+                                }
+                            }
                         }
-                        // TODO: Allow closing the panel from the menu item.
+
+                        action.set_state(&glib::Variant::from(!panel_open));
                     }
                 })
                 .build(),

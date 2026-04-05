@@ -112,4 +112,12 @@ impl PanelDock {
     pub fn panel_drag_ended(&self) {
         self.set_width_request(0);
     }
+
+    /// Remove a panel frame from the dock.
+    ///
+    /// This should only be called with frames that are empty to garbage
+    /// collect them.
+    pub fn remove_frame(&self, frame: &PanelFrame) {
+        frame.unparent();
+    }
 }

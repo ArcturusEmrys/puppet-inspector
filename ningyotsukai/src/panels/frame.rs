@@ -9,6 +9,7 @@ use gtk4::subclass::prelude::*;
 use std::cell::RefCell;
 
 use crate::document::DocumentController;
+use crate::panels::PanelDock;
 use crate::panels::page_ref::PageRef;
 
 use ningyo_extensions::prelude::*;
@@ -23,8 +24,11 @@ pub struct PanelFrameImp {
     #[template_child]
     contents: TemplateChild<gtk4::Stack>,
 
-    #[property(set=Self::set_name)]
+    #[property(get, set)]
     name: RefCell<String>,
+
+    #[property(name = "associated-action", get, set)]
+    associated_action: RefCell<String>,
 }
 
 #[glib::object_subclass]
@@ -72,10 +76,9 @@ impl BuildableImpl for PanelFrameImp {
             match name {
                 Some("NGTPanelFrame-internal") => self.parent_add_child(builder, object, name),
                 _ => {
-                    let count = self.contents.pages().n_items();
                     self.contents.add_titled(
                         widget,
-                        Some(&format!("{}", count)),
+                        Some(&self.associated_action.borrow().as_str()),
                         self.name.borrow().as_str(),
                     );
                     self.populate_handles();
@@ -88,22 +91,6 @@ impl BuildableImpl for PanelFrameImp {
 }
 
 impl PanelFrameImp {
-    /// Set the name of the frame page.
-    ///
-    /// This is primarily intended to be used during XML construction, NOT the
-    /// day-to-day functioning of your app. Notably, please do not bind this
-    /// property.
-    fn set_name(&self, new_name: String) {
-        for page in self.contents.pages().iter::<gtk4::StackPage>() {
-            let page = page.unwrap();
-            page.set_title(&new_name);
-        }
-
-        *self.name.borrow_mut() = new_name;
-
-        self.populate_handles();
-    }
-
     fn populate_handles(&self) {
         while let Some(child) = self.handles.first_child() {
             child.unparent();
@@ -182,6 +169,17 @@ impl PanelFrameImp {
 
             self.handles.append(&label);
 
+            if let Some(name) = page.name() {
+                let close = gtk4::Image::builder().icon_name("window-close").build();
+                let remove_button = gtk4::Button::builder()
+                    .child(&close)
+                    .action_name(name)
+                    .css_classes(["NGTPanels-remove"])
+                    .build();
+
+                self.handles.append(&remove_button);
+            }
+
             if group.is_none() {
                 group = Some(label.clone());
             }
@@ -208,11 +206,35 @@ impl PanelFrame {
     pub fn adopt_page(&self, from_panel: PanelFrame, incoming_page: gtk4::StackPage) {
         let widget = incoming_page.child();
         let title = incoming_page.title();
+        let name = incoming_page.name();
 
         from_panel.imp().contents.remove(&widget);
         self.imp()
             .contents
-            .add_titled(&widget, None, title.as_deref().unwrap_or(""));
+            .add_titled(&widget, name.as_deref(), title.as_deref().unwrap_or(""));
         self.imp().populate_handles();
+    }
+
+    /// Remove any pages in this frame that are associated with the given
+    /// action name.
+    ///
+    /// Returns true if pages were removed.
+    pub fn remove_page_by_action(&self, action_name: &str) -> bool {
+        for page in self.imp().contents.pages().iter() {
+            let page: gtk4::StackPage = page.unwrap();
+
+            if page.name().unwrap().as_str() == action_name {
+                self.imp().contents.remove(&page.child());
+                self.imp().populate_handles();
+
+                if self.n_pages() == 0 {
+                    self.closest::<PanelDock>().unwrap().remove_frame(self);
+                }
+
+                return true;
+            }
+        }
+
+        false
     }
 }
