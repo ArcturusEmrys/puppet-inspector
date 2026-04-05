@@ -69,6 +69,7 @@ where
 					strip_index_format: None,
 					front_face: wgpu::FrontFace::Ccw,
 					cull_mode: None,
+					unclipped_depth: true,
 					..Default::default()
 				},
 				depth_stencil,
