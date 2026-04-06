@@ -1,10 +1,9 @@
 [package]
-name = "inox2d-wgpu"
+name = "ningyo-render-wgpu"
 description = "WGPU renderer for Inox2D"
-authors = ["Arcturus Emrys"]
+authors = ["Arcturus Emrys <aemrys@arcturus.live>"]
 version = "0.3.0"
 edition = "2024"
-repository = "https://github.com/Inochi2D/inox2d"
 license = "BSD-2-Clause"
 keywords = ["gamedev", "graphics", "inochi2d", "vtuber", "opengl"]
 categories = ["graphics", "rendering"]
