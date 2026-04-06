@@ -1,6 +1,14 @@
-# Puppet Inspector
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-Software for examining the data inside of virtual puppet files such as Inochi2D INP, etc.
+# Ningyotsukai
+
+A grimoire that brings virtual puppets to life.
+
+These spells are intended for use with virtual puppets created with the Inochi2D grimoires.
+
+Also includes a spell for inspecting the inner workings of said puppets.
+
+This grimoire is Free Software, you may use it under the GNU General Public License version 3, or at your discretion, any later version published by the Free Software Foundation. See COPYING.md for details.
 
 ## Building
 
