@@ -3,7 +3,7 @@ use wgpu;
 use inox2d::model::Model;
 use inox2d::texture::ShallowTexture;
 
-use ningyo_texshare::prelude::*;
+use crate::error::WgpuRendererError;
 
 #[derive(Clone)]
 pub struct DeviceTexture {
@@ -71,6 +71,12 @@ impl DeviceTexture {
         }
     }
 
+    pub fn required_render_target_uses() -> wgpu::TextureUsages {
+        wgpu::TextureUsages::TEXTURE_BINDING
+            | wgpu::TextureUsages::RENDER_ATTACHMENT
+            | wgpu::TextureUsages::COPY_DST
+    }
+
     pub fn empty_render_target(
         device: &wgpu::Device,
         encoder: &mut wgpu::CommandEncoder,
@@ -89,9 +95,7 @@ impl DeviceTexture {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING
-                | wgpu::TextureUsages::RENDER_ATTACHMENT
-                | wgpu::TextureUsages::COPY_DST,
+            usage: Self::required_render_target_uses(),
             label: Some("GBuffer"),
             view_formats: &[],
         });
@@ -106,35 +110,19 @@ impl DeviceTexture {
         empty
     }
 
-    pub fn empty_render_target_exportable(
-        adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        width: u32,
-        height: u32,
-        format: wgpu::TextureFormat,
-    ) -> Self {
-        let size = wgpu::Extent3d {
-            width,
-            height,
-            depth_or_array_layers: 1,
-        };
-        let device_texture = device.create_texture_exportable(
-            adapter,
-            queue,
-            &wgpu::TextureDescriptor {
-                size,
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format,
-                usage: wgpu::TextureUsages::TEXTURE_BINDING
-                    | wgpu::TextureUsages::RENDER_ATTACHMENT
-                    | wgpu::TextureUsages::COPY_DST,
-                label: Some("Target Texture"),
-                view_formats: &[],
-            },
-        );
+    /// Adopt a user-provided texture for use as a render target.
+    ///
+    /// The texture must have a superset of the usages prescribed by
+    /// `required_render_target_uses`.
+    pub fn user_render_target(
+        device_texture: wgpu::Texture,
+    ) -> Result<DeviceTexture, WgpuRendererError> {
+        if !device_texture
+            .usage()
+            .contains(Self::required_render_target_uses())
+        {
+            return Err(WgpuRendererError::InvalidRenderTargetTexture);
+        }
 
         let view = device_texture.create_view(&wgpu::TextureViewDescriptor::default());
         let empty = Self {
@@ -142,7 +130,7 @@ impl DeviceTexture {
             view,
         };
 
-        empty
+        Ok(empty)
     }
 
     // Clear the texture.

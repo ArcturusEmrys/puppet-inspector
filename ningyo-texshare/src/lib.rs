@@ -1,5 +1,6 @@
-mod wgpu;
 mod error;
+mod texture;
+mod wgpu;
 
 #[cfg(target_os = "linux")]
 pub mod linux;
@@ -7,10 +8,11 @@ pub mod linux;
 #[cfg(target_os = "linux")]
 pub mod vulkan;
 
-pub use wgpu::{AdapterExt, DeviceExt, InstanceExt};
 pub use error::Error;
+pub use texture::ExportableTexture;
+pub use wgpu::{AdapterExt, DeviceExt, InstanceExt};
 
-#[cfg(target_os="linux")]
+#[cfg(target_os = "linux")]
 pub use linux::ExportedTexture;
 
 pub mod prelude {

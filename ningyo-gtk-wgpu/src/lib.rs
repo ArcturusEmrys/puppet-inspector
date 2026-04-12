@@ -1,3 +1,4 @@
+mod boxed;
 mod widget;
 
 pub use widget::WgpuArea;

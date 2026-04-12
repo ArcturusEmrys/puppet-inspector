@@ -1,17 +1,18 @@
 //! Glue functions to generate WGPU objects holding our required API
 //! extensions.
 
+use crate::texture::ExportableTexture;
 use crate::vulkan;
 use crate::vulkan::AdapterExt as VulkanAdapterExt;
 use crate::vulkan::DeviceExt as VulkanDeviceExt;
 use wgpu::{
     Adapter, Device, DeviceDescriptor, Instance, InstanceDescriptor, Queue, RequestDeviceError,
-    Texture, TextureDescriptor,
+    TextureDescriptor,
 };
 use wgpu_core::device::DeviceError as CoreDeviceError;
 use wgpu_core::instance::RequestDeviceError as CoreRequestDeviceError;
-use wgpu_hal::vulkan::Api as VulkanApi;
 use wgpu_hal::InstanceError;
+use wgpu_hal::vulkan::Api as VulkanApi;
 
 pub trait InstanceExt {
     fn new_with_extensions(desc: InstanceDescriptor) -> Result<Instance, InstanceError>;
@@ -71,12 +72,15 @@ pub trait DeviceExt {
     /// platform:
     ///
     /// * Linux: DMA-BUF (via Vulkan)
+    ///
+    /// Returns None if no texture export backend is available or if the
+    /// requested texture descriptor is incompatible with texture sharing.
     fn create_texture_exportable(
         &self,
         adapter: &wgpu::Adapter,
         queue: &wgpu::Queue,
         texture: &TextureDescriptor<'_>,
-    ) -> Texture;
+    ) -> Option<ExportableTexture>;
 }
 
 fn map_texture_usage(
@@ -168,7 +172,7 @@ impl DeviceExt for Device {
         adapter: &wgpu::Adapter,
         queue: &wgpu::Queue,
         texture: &TextureDescriptor<'_>,
-    ) -> Texture {
+    ) -> Option<ExportableTexture> {
         let format_features = adapter.get_texture_format_features(texture.format);
 
         let inner_desc = wgpu_hal::TextureDescriptor {
@@ -214,10 +218,9 @@ impl DeviceExt for Device {
                 },
             );
 
-            texture
+            Some(ExportableTexture { texture })
         } else {
-            //If anything, this SHOULD panic.
-            self.create_texture(texture)
+            None
         }
     }
 }

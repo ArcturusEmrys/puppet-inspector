@@ -8,9 +8,10 @@ use ash::vk::{
 };
 use std::marker::PhantomData;
 use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd};
-use std::ptr::{null, null_mut};
+use std::ptr::null;
 
 use crate::error::Error as OurError;
+use crate::texture::ExportableTexture;
 
 //TODO: Actually write a test case for all of this code.
 
@@ -25,10 +26,10 @@ pub struct ExportedTexture {
 impl ExportedTexture {
     pub fn export_to_dmabuf(
         device: &wgpu::Device,
-        texture: &wgpu::Texture,
+        texture: &ExportableTexture,
     ) -> Result<ExportedTexture, OurError> {
         unsafe {
-            let Some(inner_texture) = texture.as_hal::<wgpu_hal::api::Vulkan>() else {
+            let Some(inner_texture) = texture.texture().as_hal::<wgpu_hal::api::Vulkan>() else {
                 return Err(OurError::WrongAPIError);
             };
             let device = device.as_hal::<wgpu_hal::api::Vulkan>().unwrap();
@@ -85,7 +86,7 @@ impl ExportedTexture {
             )?;
 
             Ok(ExportedTexture {
-                texture: texture.clone(),
+                texture: texture.texture().clone(),
                 fd: OwnedFd::from_raw_fd(fd),
                 offset: layout.offset,
                 stride: layout.row_pitch,
@@ -107,6 +108,8 @@ impl ExportedTexture {
     }
 
     pub fn into_gdk_texture(self) -> Result<gdk4::Texture, Box<dyn std::error::Error>> {
+        //TODO: Add an API for re-exporting a texture to GDK.
+        //There's a builder function set_update_texture
         unsafe {
             dbg!(self.texture.width());
             dbg!(self.texture.height());

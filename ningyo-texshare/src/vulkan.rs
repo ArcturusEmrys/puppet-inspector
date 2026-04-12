@@ -447,6 +447,9 @@ fn create_image_without_memory(
     let mut drm_extension_buffer = vec![];
     #[cfg(target_os = "linux")]
     {
+        //NOTE: We specifically filter out LINEAR (mod 0) format as many GPUs
+        //do not want to render to a linear texture (or at least, Intel doesn't
+        //wanna)
         let compatible_modifier =
             find_compatible_drm_modifier(device, original_format, vk_info.usage)
                 .iter()
@@ -502,6 +505,8 @@ fn create_image_without_memory(
 }
 
 pub trait DeviceExt {
+    /// Create an exportable Vulkan texture with all of the extensions
+    /// necessary to be exported from a Vulkan context.
     fn create_texture_exportable(
         &self,
         texture: &TextureDescriptor<'_>,

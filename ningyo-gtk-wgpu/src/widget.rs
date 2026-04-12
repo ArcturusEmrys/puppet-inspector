@@ -1,5 +1,5 @@
 mod class;
 mod subclass;
 
-pub use class::{WgpuArea, WgpuAreaExt};
-pub use subclass::WgpuAreaImpl;
+pub use class::WgpuArea;
+pub use subclass::{WgpuAreaExt, WgpuAreaImpl};

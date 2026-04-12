@@ -11,11 +11,10 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use inox2d::render::InoxRendererExt;
-use ningyo_texshare::ExportedTexture;
+use ningyo_gtk_wgpu::WgpuArea;
 use ningyo_gtk_wgpu::prelude::*;
 use ningyo_gtk_wgpu::subclass::prelude::*;
-use ningyo_gtk_wgpu::WgpuArea;
-use ningyo_render_wgpu::WgpuRenderer;
+use ningyo_render_wgpu::{WgpuRenderer, WgpuResources};
 
 use generational_arena::Index;
 
@@ -26,6 +25,8 @@ use pollster::block_on;
 #[derive(Default)]
 pub struct StageRendererState {
     document: Option<Arc<Mutex<Document>>>,
+
+    resources: Option<Arc<Mutex<WgpuResources>>>,
 
     /// All the renderers that exist to render puppets on our stage.
     renderers: HashMap<Index, WgpuRenderer<'static>>,
@@ -56,7 +57,7 @@ impl ObjectSubclass for StageRendererImp {
     type Type = StageRenderer;
     type ParentType = WgpuArea;
 
-    fn class_init(class: &mut Self::Class) {}
+    fn class_init(_class: &mut Self::Class) {}
 
     fn instance_init(_obj: &InitializingObject<Self>) {}
 }
@@ -68,14 +69,35 @@ impl ObjectImpl for StageRendererImp {
     }
 }
 
-impl WidgetImpl for StageRendererImp {}
+impl WidgetImpl for StageRendererImp {
+    fn realize(&self) {
+        self.parent_realize();
+
+        self.state.borrow_mut().resources =
+            Some(Arc::new(Mutex::new(WgpuResources::new_with_user_device(
+                self.obj().device().unwrap(),
+                self.obj().queue().unwrap(),
+            ))));
+    }
+}
 
 impl WgpuAreaImpl for StageRendererImp {
-    fn resize(&self, x: i32, y: i32) -> glib::Propagation {
+    fn preferred_device_descriptor(&self) -> (wgpu::DeviceDescriptor<'static>, glib::GString) {
+        (
+            WgpuResources::preferred_device_descriptor(),
+            "WGPU Renderer".into(),
+        )
+    }
+
+    fn preferred_texture_usage(&self) -> wgpu::TextureUsages {
+        WgpuRenderer::required_render_target_uses()
+    }
+
+    fn resize(&self, texture: wgpu::Texture) -> glib::Propagation {
         self.viewport_changed();
 
         for (_, renderer) in self.state.borrow_mut().renderers.iter_mut() {
-            renderer.resize(x as u32, y as u32).unwrap();
+            renderer.set_render_target(texture.clone()).unwrap();
         }
 
         glib::Propagation::Proceed
@@ -104,49 +126,24 @@ impl WgpuAreaImpl for StageRendererImp {
             }
         }
 
+        let resources = state.resources.clone().unwrap();
+
         // TODO: Issue a clear command on one of the renderers.
-
-        // TODO: WGPU's insistence on async device creation means we can't
-        // create renderers inline.
-        let mut texture = None;
-        let mut device = None;
-
         for (index, puppet) in document.stage().iter() {
-            if !state.renderers.contains_key(&index) {
-                let new_renderer = if let Some((_, zygote)) = state.renderers.iter().next() {
-                    zygote.clone_with_model(&puppet.model()).unwrap()
-                } else {
-                    block_on(WgpuRenderer::new_headless(&puppet.model())).unwrap()
-                };
+            let mut renderer = state.renderers.entry(index).or_insert_with(|| {
+                WgpuRenderer::new_headless_with_resources(resources.clone(), &puppet.model())
+                    .unwrap()
+            });
 
-                state.renderers.insert(index, new_renderer);
-            }
-            let mut renderer = state.renderers.get_mut(&index).unwrap();
-
-            if texture.is_none() {
-                texture = renderer.target_texture();
-                device = Some(renderer.device());
-            }
+            renderer
+                .set_render_target(self.obj().texture().unwrap())
+                .unwrap();
 
             self.apply_viewport_to_renderer(&mut renderer, &puppet);
 
             renderer
                 .draw(&puppet.model().puppet)
                 .expect("successful draw");
-        }
-
-        if let (Some(texture), Some(device)) = (texture, device) {
-            // TODO: Upstream this into the gtk-wgpu library.
-            // TODO: Do we REALLY need to do this every frame?!
-            device
-                .poll(wgpu::PollType::Wait {
-                    submission_index: None,
-                    timeout: None,
-                })
-                .unwrap();
-            let export = ExportedTexture::export_to_dmabuf(&device, &texture).unwrap();
-            self.obj()
-                .attach_texture(export.into_gdk_texture().unwrap());
         }
 
         drop(document);

@@ -1444,16 +1444,14 @@ name = "ningyo-gtk-wgpu"
 version = "0.1.0"
 dependencies = [
  "ash",
- "dma-buf",
- "drm-fourcc",
  "gdk4",
  "glib",
  "graphene-rs",
  "gtk4",
+ "ningyo-texshare",
+ "pollster",
  "thiserror 1.0.69",
  "wgpu",
- "wgpu-core",
- "wgpu-hal",
 ]
 
 [[package]]
@@ -1474,7 +1472,6 @@ version = "0.3.0"
 dependencies = [
  "glam",
  "inox2d",
- "ningyo-texshare",
  "shaderc",
  "spirv-reflect",
  "thiserror 1.0.69",
