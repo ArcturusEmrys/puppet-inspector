@@ -103,9 +103,11 @@ impl ExportedTexture {
             let nthandle = HANDLE(self.raw_handle() as *mut c_void);
 
             let mut resource: Option<ID3D12Resource> = None;
-            target_device.OpenSharedHandle(nthandle, &mut resource).map_err(|e| OurError::from(e))?;
+            target_device
+                .OpenSharedHandle(nthandle, &mut resource)
+                .map_err(|e| OurError::from(e))?;
 
-            /* Alternative code path: Attempt to open the handle as a heap 
+            /* Alternative code path: Attempt to open the handle as a heap
             let mut heap: Option<ID3D12Heap> = None;
             eprintln!("about to ask for heap");
             target_device

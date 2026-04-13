@@ -16,7 +16,9 @@ pub enum SurfaceError {
     /// The underlying surface has changed, and therefore the surface configuration is outdated.
     ///
     /// Call [`Surface::configure()`] and try again.
-    #[error("The underlying surface has changed, and therefore the surface configuration is outdated.")]
+    #[error(
+        "The underlying surface has changed, and therefore the surface configuration is outdated."
+    )]
     Outdated,
 
     /// The surface has been lost and needs to be recreated.
@@ -39,12 +41,12 @@ pub enum SurfaceError {
 
 pub enum SurfaceOptimal {
     Optimal,
-    Suboptimal
+    Suboptimal,
 }
 
 pub struct SurfaceTexture {
     pub texture: wgpu::SurfaceTexture,
-    pub optimal: SurfaceOptimal
+    pub optimal: SurfaceOptimal,
 }
 
 pub trait CurrentSurfaceTextureExt {
@@ -54,13 +56,19 @@ pub trait CurrentSurfaceTextureExt {
 impl CurrentSurfaceTextureExt for wgpu::CurrentSurfaceTexture {
     fn as_surface_texture(self) -> Result<SurfaceTexture, SurfaceError> {
         match self {
-            Self::Success(st) => Ok(SurfaceTexture { texture: st, optimal: SurfaceOptimal::Optimal}),
-            Self::Suboptimal(st) => Ok(SurfaceTexture { texture: st, optimal: SurfaceOptimal::Suboptimal}),
+            Self::Success(st) => Ok(SurfaceTexture {
+                texture: st,
+                optimal: SurfaceOptimal::Optimal,
+            }),
+            Self::Suboptimal(st) => Ok(SurfaceTexture {
+                texture: st,
+                optimal: SurfaceOptimal::Suboptimal,
+            }),
             Self::Timeout => Err(SurfaceError::Timeout),
             Self::Occluded => Err(SurfaceError::Occluded),
             Self::Outdated => Err(SurfaceError::Outdated),
             Self::Lost => Err(SurfaceError::Lost),
-            Self::Validation => Err(SurfaceError::Validation)
+            Self::Validation => Err(SurfaceError::Validation),
         }
     }
 }

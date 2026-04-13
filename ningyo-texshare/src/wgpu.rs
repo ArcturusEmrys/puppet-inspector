@@ -22,10 +22,14 @@ impl InstanceExt for Instance {
     fn new_with_extensions(desc: InstanceDescriptor) -> Result<Instance, InstanceError> {
         // TODO: Use desc's backend flags to choose a backend once we have all of
         // them set up.
-        unsafe {
-            Ok(Instance::from_hal::<VulkanApi>(vulkan::instance_init(
-                &vulkan::instance_descriptor_convert("ningyo-gtk-wgpu", desc),
-            )?))
+        if desc.backends.contains(wgpu::Backends::VULKAN) {
+            unsafe {
+                Ok(Instance::from_hal::<VulkanApi>(vulkan::instance_init(
+                    &vulkan::instance_descriptor_convert("ningyo-gtk-wgpu", desc),
+                )?))
+            }
+        } else {
+            Ok(Instance::new(desc))
         }
     }
 }
@@ -47,7 +51,11 @@ impl AdapterExt for Adapter {
         if let Some(vulkan_adapter) = unsafe { self.as_hal::<VulkanApi>() } {
             unsafe {
                 let open_device = vulkan_adapter
-                    .open_with_extensions(desc.required_features, &desc.required_limits, &desc.memory_hints)
+                    .open_with_extensions(
+                        desc.required_features,
+                        &desc.required_limits,
+                        &desc.memory_hints,
+                    )
                     .map_err(|e| {
                         RequestDeviceError::from(CoreRequestDeviceError::Device(
                             CoreDeviceError::from_hal(e),
@@ -217,7 +225,11 @@ impl DeviceExt for Device {
 
             Some(ExportableTexture { texture, alignment })
         } else {
-            None
+            //TODO: Actually implement texture export for DX12 and Metal.
+            Some(ExportableTexture {
+                texture: self.create_texture(texture),
+                alignment: 1,
+            })
         }
     }
 }

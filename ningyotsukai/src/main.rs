@@ -12,7 +12,7 @@ mod tracker;
 mod window;
 
 fn main() -> glib::ExitCode {
-    //io_send.send_blocking(io::IoMessage::ConnectVTSTracker())
+    env_logger::init();
 
     gio::resources_register_include!("resources.gresource").expect("valid resource file");
     gtk4::init().expect("valid gtk4 state");

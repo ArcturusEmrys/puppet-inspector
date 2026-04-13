@@ -194,7 +194,10 @@ impl WidgetImpl for WgpuAreaImp {
                     .unwrap()
                     .1
                     .clone()
-                    .into_gdk_texture(&self.wgpu_device.borrow().as_ref().unwrap(), &self.obj().display())
+                    .into_gdk_texture(
+                        &self.wgpu_device.borrow().as_ref().unwrap(),
+                        &self.obj().display(),
+                    )
                     .expect("working gdk4 import");
 
                 *self.texture.borrow_mut() = Some(texture);
@@ -314,8 +317,16 @@ impl WgpuAreaImpl for WgpuAreaImp {
 
 impl WgpuAreaImp {
     async fn create_instance(me: WgpuArea) -> Result<(), Box<dyn Error>> {
-        let instance =
-            wgpu::Instance::new_with_extensions(wgpu::InstanceDescriptor::new_without_display_handle_from_env())?;
+        #[allow(unused)]
+        let mut instance_desc = wgpu::InstanceDescriptor::new_without_display_handle_from_env();
+
+        // Force DX12 on Windows.
+        #[cfg(target_os = "windows")]
+        {
+            instance_desc.backends = wgpu::Backends::DX12;
+        }
+
+        let instance = wgpu::Instance::new_with_extensions(instance_desc)?;
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 ..Default::default()

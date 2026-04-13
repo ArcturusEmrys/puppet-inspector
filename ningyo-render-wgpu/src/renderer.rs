@@ -52,7 +52,8 @@ impl<'window> WgpuRenderer<'window> {
         target: impl Into<wgpu::SurfaceTarget<'window>>,
         model: &Model,
     ) -> Result<Self, WgpuRendererError> {
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
+        let instance =
+            wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
         let surface = instance.create_surface(target)?;
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -100,7 +101,8 @@ impl<'window> WgpuRenderer<'window> {
 
     /// Create a WGPU renderer that renders to an internal texture.
     pub async fn new_headless(model: &Model) -> Result<Self, WgpuRendererError> {
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
+        let instance =
+            wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 ..Default::default()
@@ -228,7 +230,11 @@ impl<'window> WgpuRenderer<'window> {
     /// Does nothing if this renderer is not directly rendering to a surface.
     pub fn present(&self) -> Result<(), ningyo_extensions::SurfaceError> {
         if let Some((surface, _config)) = &self.surface {
-            surface.get_current_texture().as_surface_texture()?.texture.present();
+            surface
+                .get_current_texture()
+                .as_surface_texture()?
+                .texture
+                .present();
         }
 
         Ok(())
@@ -247,7 +253,11 @@ impl<'window> WgpuRenderer<'window> {
         match (&self.surface, &*self.target.lock().unwrap()) {
             (Some((surface, _)), (None, _)) => {
                 encoder.clear_texture(
-                    &surface.get_current_texture().as_surface_texture()?.texture.texture,
+                    &surface
+                        .get_current_texture()
+                        .as_surface_texture()?
+                        .texture
+                        .texture,
                     &wgpu::ImageSubresourceRange {
                         aspect: wgpu::TextureAspect::All,
                         base_mip_level: 0,
@@ -309,9 +319,13 @@ impl<'window> InoxRenderer for WgpuRenderer<'window> {
             )
         });
         let surface_texture = match surface_texture {
-            Some((Ok(ningyo_extensions::SurfaceTexture {
-                texture, optimal: _optimal
-            }), viewport)) => Some((texture, viewport)),
+            Some((
+                Ok(ningyo_extensions::SurfaceTexture {
+                    texture,
+                    optimal: _optimal,
+                }),
+                viewport,
+            )) => Some((texture, viewport)),
             Some((Err(e), _)) => return Err(e)?,
             None => None,
         };
