@@ -96,12 +96,12 @@ impl ExportedTexture {
     /// Get the fd for this exported texture.
     ///
     /// SAFETY: This FD is only valid for the lifetime of the ExportedTexture.
-    unsafe fn fd<'a>(&'a self) -> BorrowedFd<'a> {
+    pub unsafe fn fd<'a>(&'a self) -> BorrowedFd<'a> {
         self.fd.as_fd()
     }
 
     /// Get the texture that was exported.
-    fn texture(&self) -> &wgpu::Texture {
+    pub fn texture(&self) -> &wgpu::Texture {
         &self.texture
     }
 

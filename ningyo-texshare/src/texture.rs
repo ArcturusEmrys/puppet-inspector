@@ -12,6 +12,8 @@ use crate::error::Error;
 #[derive(Debug, Clone)]
 pub struct ExportableTexture {
     pub(crate) texture: wgpu::Texture,
+
+    #[cfg_attr(target_os = "linux", allow(unused))]
     pub(crate) alignment: u64,
 }
 
@@ -21,7 +23,7 @@ impl ExportableTexture {
     }
 
     #[cfg(target_os = "linux")]
-    pub fn as_dmabuf(&self, device: &wgpu::Device) -> crate::linux::ExportedTexture {
+    pub fn as_dmabuf(&self, device: &wgpu::Device) -> Result<crate::linux::ExportedTexture, Error> {
         use crate::linux;
 
         linux::ExportedTexture::export_to_dmabuf(device, self)
