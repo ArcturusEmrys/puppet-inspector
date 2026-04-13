@@ -43,8 +43,6 @@ impl ExportedTexture {
                 return Err(OurError::MissingExtension);
             }
 
-            //also don't forget VK_EXT_image_drm_format_modifier
-
             let memory = match inner_texture.memory() {
                 TextureMemory::Allocation(alloc) => alloc.memory(),
                 TextureMemory::Dedicated(memory) => *memory,

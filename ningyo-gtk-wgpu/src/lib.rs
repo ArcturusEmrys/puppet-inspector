@@ -1,4 +1,5 @@
 mod boxed;
+mod texshare;
 mod widget;
 
 pub use widget::WgpuArea;

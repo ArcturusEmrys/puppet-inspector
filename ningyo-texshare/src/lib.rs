@@ -5,7 +5,9 @@ mod wgpu;
 #[cfg(target_os = "linux")]
 pub mod linux;
 
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "windows")]
+pub mod windows;
+
 pub mod vulkan;
 
 pub use error::Error;

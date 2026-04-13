@@ -33,7 +33,7 @@ where
             label: Some(&name),
 
             // NOTE: This assumes vertex shaders always use set 0 and fragment shaders always use set 1.
-            bind_group_layouts: &[vert.bindgroup_layout(), frag.bindgroup_layout()],
+            bind_group_layouts: &[Some(vert.bindgroup_layout()), Some(frag.bindgroup_layout())],
             immediate_size: 0,
         });
 

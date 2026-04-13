@@ -20,6 +20,7 @@ use ningyo_texshare::prelude::*;
 use pollster::block_on;
 
 use crate::boxed::{BoxedWgpuDeviceDescriptor, BoxedWgpuTexture, BoxedWgpuTextureUsages};
+use crate::texshare::TryIntoGdkTexture;
 use crate::widget::subclass::{WgpuAreaClass, WgpuAreaExt, WgpuAreaImpl};
 
 #[derive(Default)]
@@ -186,13 +187,17 @@ impl WidgetImpl for WgpuAreaImp {
                     .emit_resize(self.wgpu_texture.borrow().as_ref().unwrap().0.clone());
                 self.state.borrow_mut().needs_resize = false;
 
-                //TODO: When we add a texshare abstract API we need to use that
-                let dmabuf = ningyo_texshare::linux::ExportedTexture::export_to_dmabuf(
-                    &self.wgpu_device.borrow().as_ref().unwrap(),
-                    &self.wgpu_texture.borrow().as_ref().unwrap().1,
-                )
-                .unwrap();
-                *self.texture.borrow_mut() = Some(dmabuf.into_gdk_texture().expect("gdk4 import"));
+                let texture = self
+                    .wgpu_texture
+                    .borrow()
+                    .as_ref()
+                    .unwrap()
+                    .1
+                    .clone()
+                    .into_gdk_texture(&self.wgpu_device.borrow().as_ref().unwrap(), &self.obj().display())
+                    .expect("working gdk4 import");
+
+                *self.texture.borrow_mut() = Some(texture);
             }
 
             // TODO: Add option to disable the implicit clear.
@@ -310,7 +315,7 @@ impl WgpuAreaImpl for WgpuAreaImp {
 impl WgpuAreaImp {
     async fn create_instance(me: WgpuArea) -> Result<(), Box<dyn Error>> {
         let instance =
-            wgpu::Instance::new_with_extensions(wgpu::InstanceDescriptor::from_env_or_default())?;
+            wgpu::Instance::new_with_extensions(wgpu::InstanceDescriptor::new_without_display_handle_from_env())?;
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 ..Default::default()

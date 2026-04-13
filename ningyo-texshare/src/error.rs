@@ -10,6 +10,10 @@ pub enum Error {
     #[error("Vulkan API error: {0}")]
     VulkanError(#[from] VkResult),
 
+    #[cfg(target_os = "windows")]
+    #[error("Windows/DirectX API error: {0}")]
+    WindowsError(#[from] windows_result::Error),
+
     #[error("API of object does not match capabilities of called function")]
     WrongAPIError,
 
@@ -21,8 +25,16 @@ pub enum Error {
     #[error("The texture cannot be exported as it is already external and opaque to the device")]
     OpaqueExport,
 
+    #[error("The texture cannot be transferred to the requested device as they are not the same")]
+    InvalidTransferTarget,
+
+    #[cfg(target_os = "linux")]
     #[error("The file descriptor provided or obtained was invalid.")]
     InvalidFd,
+
+    #[cfg(target_os = "windows")]
+    #[error("The HANDLE provided or obtained was invalid.")]
+    InvalidHandle,
 
     #[error(
         "The texture format cannot be represented in the target API or as an exportable texture."
@@ -31,6 +43,9 @@ pub enum Error {
 
     #[error("No valid memory types found to store exportable texture.")]
     NoValidMemoryType,
+
+    #[error("The Vulkan graphics device does not also have a DX12 identity.")]
+    NoDx12Identity,
 
     #[error("GDK yielded the following error: {0}")]
     GdkError(#[from] glib::Error),

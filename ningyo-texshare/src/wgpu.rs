@@ -47,7 +47,7 @@ impl AdapterExt for Adapter {
         if let Some(vulkan_adapter) = unsafe { self.as_hal::<VulkanApi>() } {
             unsafe {
                 let open_device = vulkan_adapter
-                    .open_with_extensions(desc.required_features, &desc.memory_hints)
+                    .open_with_extensions(desc.required_features, &desc.required_limits, &desc.memory_hints)
                     .map_err(|e| {
                         RequestDeviceError::from(CoreRequestDeviceError::Device(
                             CoreDeviceError::from_hal(e),
@@ -188,13 +188,10 @@ impl DeviceExt for Device {
         };
 
         if let Some(vkdevice) = unsafe { self.as_hal::<VulkanApi>() } {
+            let (hal_texture, alignment) = vkdevice.create_texture_exportable(&inner_desc).unwrap();
             //TODO: Really? We're going to unwrap!?
-            let texture = unsafe {
-                self.create_texture_from_hal::<VulkanApi>(
-                    vkdevice.create_texture_exportable(&inner_desc).unwrap(),
-                    &texture,
-                )
-            };
+            let texture =
+                unsafe { self.create_texture_from_hal::<VulkanApi>(hal_texture, &texture) };
 
             //TODO: Once we find a DMA-BUF format that WORKS, check if this is
             //still necessary or if normal clears will work.
@@ -218,7 +215,7 @@ impl DeviceExt for Device {
                 },
             );
 
-            Some(ExportableTexture { texture })
+            Some(ExportableTexture { texture, alignment })
         } else {
             None
         }

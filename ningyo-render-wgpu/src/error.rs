@@ -5,7 +5,7 @@ pub enum WgpuRendererError {
     CreateSurfaceError(#[from] wgpu::CreateSurfaceError),
     RequestAdapterError(#[from] wgpu::RequestAdapterError),
     RequestDeviceError(#[from] wgpu::RequestDeviceError),
-    SurfaceError(#[from] wgpu::SurfaceError),
+    SurfaceError(#[from] ningyo_extensions::SurfaceError),
 
     #[error("Model rendering not initialized")]
     ModelRenderingNotInitialized,

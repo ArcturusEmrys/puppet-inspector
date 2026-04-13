@@ -4,6 +4,7 @@ use inox2d::math::camera::Camera;
 use inox2d::model::Model;
 use inox2d::node::{InoxNodeUuid, components, drawables}; //hey wait a second that's just a u32 newtype! UUIDs are four of those!
 use inox2d::render::{self, DrawSession, InoxRenderer};
+use ningyo_extensions::CurrentSurfaceTextureExt;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 use wgpu;
@@ -51,7 +52,7 @@ impl<'window> WgpuRenderer<'window> {
         target: impl Into<wgpu::SurfaceTarget<'window>>,
         model: &Model,
     ) -> Result<Self, WgpuRendererError> {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::from_env_or_default());
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
         let surface = instance.create_surface(target)?;
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -99,7 +100,7 @@ impl<'window> WgpuRenderer<'window> {
 
     /// Create a WGPU renderer that renders to an internal texture.
     pub async fn new_headless(model: &Model) -> Result<Self, WgpuRendererError> {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::from_env_or_default());
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 ..Default::default()
@@ -225,16 +226,16 @@ impl<'window> WgpuRenderer<'window> {
     /// Convenience method for presenting the rendered surface.
     ///
     /// Does nothing if this renderer is not directly rendering to a surface.
-    pub fn present(&self) -> Result<(), wgpu::SurfaceError> {
+    pub fn present(&self) -> Result<(), ningyo_extensions::SurfaceError> {
         if let Some((surface, _config)) = &self.surface {
-            surface.get_current_texture()?.present();
+            surface.get_current_texture().as_surface_texture()?.texture.present();
         }
 
         Ok(())
     }
 
     /// Convenience method for clearing the target texture or surface.
-    pub fn clear(&self) -> Result<(), wgpu::SurfaceError> {
+    pub fn clear(&self) -> Result<(), ningyo_extensions::SurfaceError> {
         let resources = self.resources.lock().unwrap();
         let mut encoder =
             resources
@@ -246,7 +247,7 @@ impl<'window> WgpuRenderer<'window> {
         match (&self.surface, &*self.target.lock().unwrap()) {
             (Some((surface, _)), (None, _)) => {
                 encoder.clear_texture(
-                    &surface.get_current_texture()?.texture,
+                    &surface.get_current_texture().as_surface_texture()?.texture.texture,
                     &wgpu::ImageSubresourceRange {
                         aspect: wgpu::TextureAspect::All,
                         base_mip_level: 0,
@@ -303,12 +304,14 @@ impl<'window> InoxRenderer for WgpuRenderer<'window> {
 
         let surface_texture = self.surface.as_ref().map(|(surface, config)| {
             (
-                surface.get_current_texture(),
+                surface.get_current_texture().as_surface_texture(),
                 UVec2::new(config.width, config.height),
             )
         });
         let surface_texture = match surface_texture {
-            Some((Ok(surface_texture), viewport)) => Some((surface_texture, viewport)),
+            Some((Ok(ningyo_extensions::SurfaceTexture {
+                texture, optimal: _optimal
+            }), viewport)) => Some((texture, viewport)),
             Some((Err(e), _)) => return Err(e)?,
             None => None,
         };
