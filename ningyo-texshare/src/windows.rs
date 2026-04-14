@@ -56,6 +56,8 @@ impl ExportedTexture {
                 TextureMemory::Dedicated(memory) => *memory,
                 TextureMemory::External => return Err(OurError::OpaqueExport),
             };
+
+            #[cfg(feature = "chatty_debug")]
             dbg!(inner_texture.memory());
 
             let ext_mem_api =
@@ -67,6 +69,7 @@ impl ExportedTexture {
 
             let handle = ext_mem_api.get_memory_win32_handle(&ext_mem_props)?;
 
+            #[cfg(feature = "chatty_debug")]
             dbg!(handle);
 
             Ok(ExportedTexture {
@@ -93,6 +96,8 @@ impl ExportedTexture {
         let Some(device_luid) = device_vk.physical_device_luid() else {
             return Err(OurError::NoDx12Identity);
         };
+
+        #[cfg(feature = "chatty_debug")]
         dbg!(device_luid);
 
         unsafe {
@@ -115,6 +120,7 @@ impl ExportedTexture {
                 .map_err(|e| OurError::from(e))?;
 
             let heap = heap.unwrap();
+            #[cfg(feature="chatty_debug")]
             dbg!(&heap);
             eprintln!("We got the heap");
 
@@ -140,6 +146,7 @@ impl ExportedTexture {
             resource_desc.Layout = Direct3D12::D3D12_TEXTURE_LAYOUT_UNKNOWN;
             resource_desc.Flags = Direct3D12::D3D12_RESOURCE_FLAG_NONE; //TODO: Any wgpu flags go here?
 
+            #[cfg(feature="chatty_debug")]
             dbg!(resource_desc);
 
             let mut resource = None;
@@ -153,6 +160,8 @@ impl ExportedTexture {
                     &mut resource,
                 )
                 .map_err(|e| OurError::from(e))?;
+
+            #[cfg(feature="chatty_debug")]
             dbg!(&resource);
             eprintln!("We got the resource"); */
 

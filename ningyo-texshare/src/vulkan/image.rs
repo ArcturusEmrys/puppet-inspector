@@ -55,6 +55,7 @@ fn find_compatible_drm_modifier(
         out_drm_format_mods.set_len(out_drm_format.drm_format_modifier_count as usize);
     }
 
+    #[cfg(feature = "chatty_debug")]
     dbg!(&out_drm_format_mods);
 
     let mut desired_features = vk::FormatFeatureFlags::empty();
@@ -152,6 +153,8 @@ pub fn create_image_without_memory(
         .usage(conv::map_texture_usage(desc.usage))
         .sharing_mode(vk::SharingMode::EXCLUSIVE)
         .initial_layout(vk::ImageLayout::UNDEFINED);
+
+    #[cfg(feature = "chatty_debug")]
     dbg!(&vk_info);
 
     // DMA-BUF support: Always use linear layout images
@@ -173,10 +176,13 @@ pub fn create_image_without_memory(
                 .map(|(mods, _planes)| *mods)
                 .collect();
 
+        #[cfg(feature = "chatty_debug")]
         dbg!(&compatible_modifier);
 
         drm_extension_buffer = compatible_modifier;
         drm_extension = drm_extension.drm_format_modifiers(&drm_extension_buffer);
+
+        #[cfg(feature = "chatty_debug")]
         dbg!(&drm_extension);
 
         vk_info = vk_info.push_next(&mut drm_extension);
@@ -185,15 +191,18 @@ pub fn create_image_without_memory(
     let mut format_list_info = vk::ImageFormatListCreateInfo::default();
     if !vk_view_formats.is_empty() {
         format_list_info = format_list_info.view_formats(&vk_view_formats);
+        #[cfg(feature = "chatty_debug")]
         dbg!(&format_list_info);
         vk_info = vk_info.push_next(&mut format_list_info);
     }
 
     if let Some(ext_info) = external_memory_image_create_info {
+        #[cfg(feature = "chatty_debug")]
         dbg!(&ext_info);
         vk_info = vk_info.push_next(ext_info);
     }
 
+    #[cfg(feature = "chatty_debug")]
     dbg!(&vk_info);
 
     let raw = unsafe { device.raw_device().create_image(&vk_info, None) }

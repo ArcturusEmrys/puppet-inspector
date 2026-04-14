@@ -109,12 +109,15 @@ impl ExportedTexture {
         //TODO: Add an API for re-exporting a texture to GDK.
         //There's a builder function set_update_texture
         unsafe {
-            dbg!(self.texture.width());
-            dbg!(self.texture.height());
-            dbg!(self.fd.as_raw_fd());
-            dbg!(self.offset);
-            dbg!(self.stride);
-            dbg!(self.texture.format());
+            #[cfg(feature = "chatty_debug")]
+            {
+                dbg!(self.texture.width());
+                dbg!(self.texture.height());
+                dbg!(self.fd.as_raw_fd());
+                dbg!(self.offset);
+                dbg!(self.stride);
+                dbg!(self.texture.format());
+            }
             Ok(gdk4::DmabufTextureBuilder::new()
                 .set_width(self.texture.width())
                 .set_height(self.texture.height())

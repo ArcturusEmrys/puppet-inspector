@@ -289,7 +289,6 @@ impl WidgetImpl for WgpuAreaImp {
         }
 
         if let Some(ref texture) = *self.texture.borrow() {
-            dbg!(texture);
             snapshot.append_texture(
                 texture,
                 &graphene::Rect::new(
@@ -299,8 +298,6 @@ impl WidgetImpl for WgpuAreaImp {
                     self.obj().height() as f32,
                 ),
             );
-
-            eprintln!("DONE");
         }
     }
 }

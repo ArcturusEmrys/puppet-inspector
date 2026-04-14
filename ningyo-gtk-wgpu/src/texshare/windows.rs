@@ -42,8 +42,6 @@ fn get_d3d_texture(
     let d3d_tex = me.as_d3d12_resource(device)?;
     let d3d_resource = d3d_tex.convert_to_id3d12_resource(device, &d3d_device)?;
 
-    dbg!(&d3d_resource);
-
     Ok(d3d_resource)
 }
 

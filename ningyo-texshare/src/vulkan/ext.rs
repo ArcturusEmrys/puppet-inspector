@@ -121,8 +121,11 @@ impl DeviceExt for Device {
                 Some(&mut external_memory_image_create_info.clone()),
             )?;
 
-        dbg!(&mem_req);
-        dbg!(format!("{:x}", mem_req.memory_type_bits));
+        #[cfg(feature = "chatty_debug")]
+        {
+            dbg!(&mem_req);
+            dbg!(format!("{:x}", mem_req.memory_type_bits));
+        }
 
         // Find a compatible memory heap to store into.
         let mem_props = unsafe {
@@ -131,12 +134,14 @@ impl DeviceExt for Device {
                 .get_physical_device_memory_properties(self.raw_physical_device())
         };
 
+        #[cfg(feature = "chatty_debug")]
         for (_heaptype_index, heaptype) in mem_props.memory_heaps_as_slice().iter().enumerate() {
             dbg!(heaptype);
         }
 
         let mut valid_memory_types = vec![];
         for (memtype_index, memtype) in mem_props.memory_types_as_slice().iter().enumerate() {
+            #[cfg(feature = "chatty_debug")]
             dbg!(memtype);
             // Skip memory types not supported by the image's memory requirements.
             if (mem_req.memory_type_bits >> memtype_index) & 0x01 != 1 {
@@ -156,6 +161,7 @@ impl DeviceExt for Device {
             }
         }
 
+        #[cfg(feature = "chatty_debug")]
         dbg!(&valid_memory_types);
         let desired_memory_type = valid_memory_types.first().copied();
 
@@ -163,12 +169,8 @@ impl DeviceExt for Device {
             return Err(OurError::NoValidMemoryType);
         };
 
-        // TODO: This is probably not necessary
-        let forcibly_64kb_aligned = (mem_req.size + 65535) & !(65535);
-        dbg!(forcibly_64kb_aligned);
-
         let mut allocate_info = vk::MemoryAllocateInfo::default()
-            .allocation_size(forcibly_64kb_aligned)
+            .allocation_size(mem_req.size)
             .memory_type_index(desired_memory_type as u32);
 
         let mut win32_handle_info = vk::ExportMemoryWin32HandleInfoKHR::default();
@@ -202,6 +204,7 @@ impl DeviceExt for Device {
                 .bind_image_memory(image, memory, 0)
                 .map_err(|e| OurError::from(e))?;
 
+            #[cfg(feature = "chatty_debug")]
             dbg!(texture);
             Ok((
                 self.texture_from_raw(image, texture, None, TextureMemory::Dedicated(memory)),

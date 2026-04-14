@@ -104,7 +104,6 @@ impl WgpuAreaImpl for StageRendererImp {
     }
 
     fn render(&self) -> glib::Propagation {
-        eprintln!("RENDER START");
         let mut state = self.state.borrow_mut();
         let document = state.document.clone().unwrap();
         let document = document.lock().unwrap();
@@ -164,8 +163,6 @@ impl WgpuAreaImpl for StageRendererImp {
                     .end_frame_capture(null(), null());
             }
         }
-
-        eprintln!("RENDER END");
 
         glib::Propagation::Proceed
     }
